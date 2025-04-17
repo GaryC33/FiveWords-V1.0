@@ -1,0 +1,11 @@
+{
+    "deno.enable": true,
+    "deno.lint": true, // Optionnel mais utile
+    "deno.unstable": [], // Optionnel mais utile
+    // Très important: spécifie que Deno ne doit s'activer QUE pour ce dossier
+    "deno.enablePaths": [
+      "supabase/functions"
+    ]
+    // Ajoute ceci seulement si l'étape 1 réussit mais que VS Code ne trouve toujours pas Deno:
+    // "deno.path": "C:\\chemin\\vers\\deno.exe" // ou le chemin pour Mac/Linux
+  }

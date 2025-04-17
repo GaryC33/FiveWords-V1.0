@@ -1,0 +1,267 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ImageBackground,
+  Image,
+  Alert,
+  Linking,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { getProfile } from '@/services/supabase';
+
+const MAX_CARD_WIDTH = 425;
+
+type LocalProfile = {
+  user_id: string;
+  first_names?: string[];
+  children_names?: string[];
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+
+
+export default function OffresScreen() {
+  const router = useRouter();
+  const [profile, setProfile] = useState<LocalProfile | null>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const result = await getProfile();
+      setProfile(result);
+    };
+    fetchProfile();
+  }, []);
+
+  const handleSubscribe = async () => {
+    if (!profile?.user_id) {
+      Alert.alert("Connexion requise", "Identifiez-vous pour vous abonner.");
+      return;
+    }
+
+    try {
+      const res = await fetch('https://qstvlvkdzrewqqxaesho.supabase.co/functions/v1/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          product: 'premium-subscription',
+          quantity: 1,
+          user_id: profile.user_id,
+          success_url: 'https://cinq-mots-pour-dodo.store/succes.html',
+          cancel_url: 'https://cinq-mots-pour-dodo.store/cancel.html',
+        }),
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        console.error('❌ Erreur HTTP:', res.status, error);
+        Alert.alert('Erreur', 'La souscription a échoué.');
+        return;
+      }
+
+      const data = await res.json();
+      if (data?.url) {
+        await Linking.openURL(data.url);
+      } else {
+        Alert.alert('Erreur', 'Lien de paiement manquant.');
+      }
+    } catch (err) {
+      console.error('❌ Erreur handleSubscribe:', err);
+      Alert.alert('Erreur', 'Une erreur est survenue.');
+    }
+  };
+
+  return (
+    <ImageBackground
+      source={require('@/assets/backgrounds/dreamy-stars1.png')}
+      resizeMode="cover"
+      style={styles.background}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.offerList}>
+
+          {/* 🌙 OFFRE PREMIUM */}
+          <View style={[styles.offerCard, styles.cardUniform, styles.featuredCard]}>
+            <View style={styles.offerContent}>
+              <Text style={styles.offerTitle}>🌙 Histoires illimitées</Text>
+              {[
+                'Des histoires en illimitées',
+                'Devenez les héros de vos histoires',
+                'Thème de l’histoire personnalisable',
+                'Sélection du style de l’illustration',
+                'Aucune publicité',
+                'Profil paramétrable',
+                'Historique accessible partout',
+                'Sans engagement'
+              ].map((text, index) => (
+                <View style={styles.bulletRow} key={index}>
+                  <Image source={require('@/assets/icons/plumette.png')} style={styles.bulletIcon} />
+                  <Text style={styles.bulletText}>{text}</Text>
+                </View>
+              ))}
+
+              <View style={styles.priceTag}>
+                <Text style={styles.priceText}>Seulement 5 € / mois</Text>
+              </View>
+
+              <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
+                <Text style={styles.ctaButtonText}>✨ Je m’abonne</Text>
+              </TouchableOpacity>
+
+            </View>
+          </View>
+                    {/* 🕊️ OFFRE GRATUITE */}
+                    <View style={[styles.offerCard, styles.cardUniform]}>
+            <View style={styles.offerContent}>
+              <Text style={styles.offerTitle}>🕊️ Offre 100% gratuite</Text>
+              {[
+                '5 histoires offertes à l’inscription',
+                '1 plume renouvelée tous les jours',
+                'Historique illimité',
+                'Profil par défaut',
+                'Style d’illustration par défaut',
+                'Thème d’histoire par défaut',
+
+              ].map((text, index) => (
+                <View style={styles.bulletRow} key={index}>
+                  <Image source={require('@/assets/icons/plumette.png')} style={styles.bulletIcon} />
+                  <Text style={[styles.bulletText, text.includes('Historique illimité') && styles.strikethrough]}>
+  {text}
+</Text>
+                </View>
+              ))}
+
+            </View>
+          </View>
+
+        </View>
+      </ScrollView>
+    </ImageBackground>
+  );
+}
+
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+  },
+  strikethrough: {
+    textDecorationLine: 'line-through',
+    color: '#999',
+    fontStyle: 'italic',
+  },
+  
+  scrollContent: {
+    alignItems: 'center',
+    paddingBottom: 60,
+    paddingTop: 32,
+    paddingHorizontal: 16,
+  },
+  offerList: {
+    gap: 16,
+    width: '100%',
+    maxWidth: MAX_CARD_WIDTH,
+  },
+  offerCard: {
+    width: '100%',
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 0,
+  },
+  cardUniform: {
+    backgroundColor: '#fff0db',
+  },
+  featuredCard: {
+    borderWidth: 2,
+    borderColor: '#4a3f35',
+  },
+  offerContent: {
+    flex: 1,
+    alignItems: 'flex-start',
+    width: '100%',
+  },
+  offerTitle: {
+    fontSize: 22,
+    fontFamily: 'Poppins-Bold',
+    color: '#4a3f35',
+    marginBottom: 16,
+    textAlign: 'left',
+    alignSelf: 'center',
+  },
+  bulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  bulletIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+    marginTop: 2,
+  },
+  bulletText: {
+    flex: 1,
+    fontFamily: 'Quicksand-Regular',
+    fontSize: 15,
+    color: '#4a3f35',
+    lineHeight: 22,
+    textAlign: 'left',
+  },
+  offerText: {
+    fontSize: 15,
+    fontFamily: 'Quicksand-Regular',
+    color: '#4a3f35',
+    textAlign: 'left',
+  },
+  italic_d: {
+    fontStyle: 'italic',
+    textAlign: 'right',
+    marginTop: 8,
+    color: '#5f5f5f',
+    fontSize: 15,
+    alignSelf: 'flex-end',
+    width: '100%',
+  },
+  priceTag: {
+    backgroundColor: '#e7dbfa',
+    borderRadius: 30,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  priceText: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 16,
+    color: '#4a3f35',
+    textAlign: 'center',
+  },
+  ctaButton: {
+    backgroundColor: '#c7b6f0',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 30,
+    alignSelf: 'center',
+    marginTop: 10,
+    shadowColor: '#4a3f35',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  ctaButtonText: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 16,
+    color: '#fff',
+  },
+});
