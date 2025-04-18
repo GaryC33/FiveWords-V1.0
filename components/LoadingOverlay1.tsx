@@ -16,19 +16,21 @@ export default function LoadingOverlay({ visible }: Props) {
     if (visible) {
       setIsVisible(true);
       fadeAnim.setValue(0);
+  
+      // Animation d'apparition
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
         useNativeDriver: true,
       }).start();
-      
-      if (videoRef.current) {
-        videoRef.current.replayAsync();
-      }
   
+      // Rejoue la vidéo depuis le début
+      videoRef.current?.playFromPositionAsync(0);
+  
+      // Masquer après 15 secondes
       timeoutRef.current = setTimeout(() => {
         setIsVisible(false);
-      }, 15000);
+      }, 16000);
     }
   
     return () => {
@@ -37,6 +39,7 @@ export default function LoadingOverlay({ visible }: Props) {
       }
     };
   }, [visible]);
+  
   
   const handlePlaybackStatusUpdate = (status: any) => {
     if (status.didJustFinish && !status.isLooping) {
@@ -56,9 +59,7 @@ export default function LoadingOverlay({ visible }: Props) {
         shouldPlay
         isLooping={false}
         onPlaybackStatusUpdate={handlePlaybackStatusUpdate}
-        onReadyForDisplay={() => {
-          videoRef.current?.replayAsync();
-        }}
+
         
       />
     </Animated.View>

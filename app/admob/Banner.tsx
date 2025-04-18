@@ -32,8 +32,8 @@ export default function Banner({ position = 'bottom', isSubscriber = false }: Ba
       )}
 
       <BannerAd
-        unitId={TEST_BANNER_ID}
-        size={BannerAdSize.ADAPTIVE_BANNER}
+        unitId={PROD_BANNER_ID}
+        size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true,
         }}

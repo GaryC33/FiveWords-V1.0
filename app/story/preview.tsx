@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState,useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -30,55 +30,52 @@ export default function StoryViewerScreen() {
   const isSubscriber = status === 'subscriber';
   const isConnected = status === 'connected';
   const words = params.words ? JSON.parse(params.words as string) : [];
+  const savedRef = useRef(false);
 
   useEffect(() => {
-    saveAndLoadStories();
+    if (!isSubscriber || savedRef.current) return;
   
-    if (isSubscriber) {
-      const timeout = setTimeout(() => {
-        const newStory: SavedStory = {
-          id: Date.now().toString(),
-          title: params.title,
-          content: params.content,
-          imageUrl: params.illustration,
-          date: new Date().toLocaleDateString('fr-FR', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-          }),
-          words,
-          isLastGenerated: true,
-        };
+    const newStory: SavedStory = {
+      id: Date.now().toString(),
+      title: params.title,
+      content: params.content,
+      imageUrl: params.illustration,
+      date: new Date().toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      }),
+      words,
+      isLastGenerated: true,
+    };
   
-        saveStoryToSupabase(newStory);
-      }, 5000); // 5 secondes
+    saveStoryToSupabase(newStory);
+    saveAndLoadStories(newStory);
   
-      return () => clearTimeout(timeout);
-    }
-  }, []);
+    savedRef.current = true;
+  }, [isSubscriber]);
+  
+  
   
 
-  const saveAndLoadStories = async () => {
+  const saveAndLoadStories = async (newStory: SavedStory) => {
     try {
-      const newStory: SavedStory = {
-        id: Date.now().toString(),
-        title: params.title,
-        content: params.content,
-        imageUrl: params.illustration,
-        date: new Date().toLocaleDateString('fr-FR', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        }),
-        words,
-        isLastGenerated: true,
-      };
-
       const existingStoriesJson = await AsyncStorage.getItem('stories');
       const existingStories: SavedStory[] = existingStoriesJson
         ? JSON.parse(existingStoriesJson)
         : [];
-
+  
+      // ❌ Ignore si une histoire identique (title + date) existe déjà
+      const alreadyExists = existingStories.some(
+        story => story.title === newStory.title && story.date === newStory.date
+      );
+  
+      if (alreadyExists) {
+        console.log('🟡 Histoire déjà enregistrée localement, ignorée.');
+        setHistory(existingStories);
+        return;
+      }
+  
       const updatedStories = [newStory, ...existingStories];
       await AsyncStorage.setItem('stories', JSON.stringify(updatedStories));
       setHistory(updatedStories);
@@ -86,6 +83,8 @@ export default function StoryViewerScreen() {
       console.error('Error saving or loading stories:', error);
     }
   };
+  
+  
 
   return (
     <ImageBackground

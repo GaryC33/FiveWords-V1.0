@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   info: {
     fontFamily: 'Quicksand-Regular',
-    color: '#4ade80',
+    color: '#fff',
     marginBottom: 16,
     textAlign: 'center',
   },

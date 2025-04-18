@@ -91,23 +91,24 @@ export async function saveStoryToSupabase(story: SavedStory) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        user_id,
-        prompt: story.title,
+        title: story.title,
         content: story.content,
         words: story.words ?? [],
       }),
     });
 
     const result = await response.json();
-    if (!response.ok || !result.id) throw new Error(result.error || 'Erreur Supabase');
 
-    await saveImageToSupabase(result.id, user_id, story.imageUrl);
-
-  } catch (err: any) {
-    console.error('❌ Erreur saveStoryToSupabase :', err);
-
+    if (!response.ok || !result.success) {
+      console.error('❌ Erreur sauvegarde Supabase :', result.error || 'inconnue');
+    } else {
+      console.log('✅ Histoire sauvegardée avec id', result.id);
+    }
+  } catch (err) {
+    console.error('❌ Exception sauvegarde Supabase :', err instanceof Error ? err.message : err);
   }
 }
+
 
 
 export async function fetchUserStoriesFromSupabase(): Promise<SavedStory[]> {

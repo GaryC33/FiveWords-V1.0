@@ -6,6 +6,7 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "jsx": "react-native",
     "types": [
       "react",
       "react-native"

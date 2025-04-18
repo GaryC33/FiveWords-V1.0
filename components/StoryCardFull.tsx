@@ -145,7 +145,7 @@ if (parentNames && childNames) {
 
   const highlightWordsInText = (text: string, keywords: string[]) => {
     const sortedWords = [...keywords].sort((a, b) => b.length - a.length);
-    const pattern = new RegExp(`\\b(${sortedWords.join('|')})\\b`, 'gi');
+    const pattern = new RegExp(`(${sortedWords.join('|')})(?!\\w)`, 'gi');
     const parts = text.split(pattern);
 
     return parts.map((part, index) => {

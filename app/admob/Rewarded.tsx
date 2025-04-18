@@ -26,7 +26,7 @@ export default function Rewarded({ visible, onClose }: Props) {
     if (!visible) return;
 
     rewarded.current = false;
-    const newAd = RewardedAd.createForAdRequest(TEST_REWARDED_ID, {
+    const newAd = RewardedAd.createForAdRequest(REWARDED_UNIT_ID, {
       requestNonPersonalizedAdsOnly: true,
     });
 

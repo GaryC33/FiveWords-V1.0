@@ -17,7 +17,7 @@ export default function Interstitial({
   const [fallback, setFallback] = useState(false);
   const [countdown, setCountdown] = useState(5);
   const adRef = useRef(
-    InterstitialAd.createForAdRequest(TEST_INTERSTITIAL_ID, {
+    InterstitialAd.createForAdRequest(INTERSTITIAL_UNIT_ID, {
       requestNonPersonalizedAdsOnly: true,
     })
   ).current;
