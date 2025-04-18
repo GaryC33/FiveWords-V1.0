@@ -1,10 +1,9 @@
 import React from 'react';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
 import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { useFonts as usePoppins, Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { useFonts as useQuicksand, Quicksand_400Regular } from '@expo-google-fonts/quicksand';
-
+import { SystemBars } from "react-native-edge-to-edge";
 
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { supabase } from '@/services/supabase';
@@ -42,7 +41,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(drawer)" />
       </Stack>
-      <StatusBar style="light" />
+      <SystemBars  style="light" />
     </>
   );
 }

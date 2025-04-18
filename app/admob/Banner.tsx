@@ -23,13 +23,7 @@ export default function Banner({ position = 'bottom', isSubscriber = false }: Ba
 
   return (
     <View style={[styles.banner, position === 'top' ? styles.top : styles.bottom]}>
-      {!loaded && (
-        <View style={styles.fallback}>
-          <Text style={styles.text}>
-            🧪 Bannière ({position === 'top' ? 'haut' : 'bas'})
-          </Text>
-        </View>
-      )}
+ 
 
       <BannerAd
         unitId={PROD_BANNER_ID}

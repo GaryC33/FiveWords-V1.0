@@ -3,7 +3,6 @@
     "name": "Cinq mots pour dodo",
     "slug": "cinq-mots-pour-dodo",
     "version": "1.0.0",
-    "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "cinqmotspourdodo",
     "userInterfaceStyle": "automatic",
@@ -47,6 +46,16 @@
           "androidAppId": "ca-app-pub-9132892858077789~2895929527",
           "iosAppId": "ca-app-pub-3940256099942544~1458002511"
         }
+        
+      ],
+      [
+        "react-native-edge-to-edge",
+        {
+          "android": {
+            "parentTheme": "Light",
+            "enforceNavigationBarContrast": false
+          }
+        }
       ],
       [
         "expo-video",
@@ -55,6 +64,7 @@
           "supportsPictureInPicture": false
         }
       ]
+      
     ],
     "experiments": {
       "typedRoutes": true

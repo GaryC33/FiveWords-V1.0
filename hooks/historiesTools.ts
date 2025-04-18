@@ -74,6 +74,7 @@ export async function saveStoryToSupabase(story: SavedStory) {
     const token = session?.access_token;
 
     if (!user_id || !token) throw new Error('Utilisateur non connecté');
+    if (!story.title || !story.content) throw new Error('Titre ou contenu manquant');
 
     const canSave = await canSaveToSupabase();
     if (canSave !== true) {
@@ -84,17 +85,21 @@ export async function saveStoryToSupabase(story: SavedStory) {
       return;
     }
 
+    const payload = {
+      title: story.title,
+      content: story.content,
+      words: story.words ?? [],
+    };
+
+    console.log('📤 Payload envoyé à save-story :', payload);
+
     const response = await fetch('https://qstvlvkdzrewqqxaesho.functions.supabase.co/save-story', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        title: story.title,
-        content: story.content,
-        words: story.words ?? [],
-      }),
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json();
@@ -108,6 +113,7 @@ export async function saveStoryToSupabase(story: SavedStory) {
     console.error('❌ Exception sauvegarde Supabase :', err instanceof Error ? err.message : err);
   }
 }
+
 
 
 

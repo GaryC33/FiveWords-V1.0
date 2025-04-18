@@ -12,10 +12,14 @@ import {
 import { DrawerToggleButton } from '@react-navigation/drawer';
 import { colors } from '@/constants/colors';
 
+
+
+
 export default function DrawerLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
+    
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {

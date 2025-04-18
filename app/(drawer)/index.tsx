@@ -5,7 +5,7 @@ import { Picker } from '@react-native-picker/picker'; // For dropdown selections
 import { useFocusEffect, router } from 'expo-router'; // Expo's routing and lifecycle hook
 
 import AnimatedWordBubble from '@/components/AnimatedWordBubble';
-import LoadingOverlay1 from '@/components/LoadingOverlay1';
+import LoadingOverlay from '@/components/LoadingOverlay';
 import MagicWordModal from '@/components/MagicWordModal';
 import PlumetteBadge from '@/components/PlumetteBadge';
 
@@ -210,7 +210,7 @@ export default function CreateScreen() {
               }}
             />
 
-            <LoadingOverlay1 visible={loading} />
+            <LoadingOverlay visible={loading} />
 
             <View style={styles.wordArea}>
               <View style={styles.cloudsContainer}>
