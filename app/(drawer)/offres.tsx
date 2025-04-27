@@ -8,10 +8,10 @@ import {
   ImageBackground,
   Image,
   Alert,
-  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { getProfile } from '@/services/supabase';
+import { requestSubscription, initIAP } from '@/services/iap'; // 🔥 Import IAP direct ici
 
 const MAX_CARD_WIDTH = 425;
 
@@ -24,7 +24,6 @@ type LocalProfile = {
   updated_at?: string;
 };
 
-
 export default function OffresScreen() {
   const router = useRouter();
   const [profile, setProfile] = useState<LocalProfile | null>(null);
@@ -35,6 +34,7 @@ export default function OffresScreen() {
       setProfile(result);
     };
     fetchProfile();
+    initIAP(); // 🔥 Initialisation IAP au montage
   }, []);
 
   const handleSubscribe = async () => {
@@ -44,34 +44,10 @@ export default function OffresScreen() {
     }
 
     try {
-      const res = await fetch('https://qstvlvkdzrewqqxaesho.supabase.co/functions/v1/create-checkout-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          product: 'premium-subscription',
-          quantity: 1,
-          user_id: profile.user_id,
-          success_url: 'https://cinq-mots-pour-dodo.store/succes.html',
-          cancel_url: 'https://cinq-mots-pour-dodo.store/cancel.html',
-        }),
-      });
-
-      if (!res.ok) {
-        const error = await res.text();
-        console.error('❌ Erreur HTTP:', res.status, error);
-        Alert.alert('Erreur', 'La souscription a échoué.');
-        return;
-      }
-
-      const data = await res.json();
-      if (data?.url) {
-        await Linking.openURL(data.url);
-      } else {
-        Alert.alert('Erreur', 'Lien de paiement manquant.');
-      }
+      await requestSubscription(); // 🔥 Lance directement l'achat
     } catch (err) {
-      console.error('❌ Erreur handleSubscribe:', err);
-      Alert.alert('Erreur', 'Une erreur est survenue.');
+      console.error('❌ Erreur lors de l’abonnement:', err);
+      Alert.alert('Erreur', 'Impossible de traiter votre abonnement.');
     }
   };
 
@@ -114,8 +90,9 @@ export default function OffresScreen() {
 
             </View>
           </View>
-                    {/* 🕊️ OFFRE GRATUITE */}
-                    <View style={[styles.offerCard, styles.cardUniform]}>
+
+          {/* 🕊️ OFFRE GRATUITE */}
+          <View style={[styles.offerCard, styles.cardUniform]}>
             <View style={styles.offerContent}>
               <Text style={styles.offerTitle}>🕊️ Offre 100% gratuite</Text>
               {[
@@ -125,16 +102,14 @@ export default function OffresScreen() {
                 'Profil par défaut',
                 'Style d’illustration par défaut',
                 'Thème d’histoire par défaut',
-
               ].map((text, index) => (
                 <View style={styles.bulletRow} key={index}>
                   <Image source={require('@/assets/icons/plumette.png')} style={styles.bulletIcon} />
                   <Text style={[styles.bulletText, text.includes('Historique illimité') && styles.strikethrough]}>
-  {text}
-</Text>
+                    {text}
+                  </Text>
                 </View>
               ))}
-
             </View>
           </View>
 
@@ -143,6 +118,9 @@ export default function OffresScreen() {
     </ImageBackground>
   );
 }
+
+// Ton style `StyleSheet.create({...})` reste inchangé ici
+
 
 const styles = StyleSheet.create({
   background: {

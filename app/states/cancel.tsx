@@ -4,23 +4,21 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { CheckCircle } from 'lucide-react-native';
-import { colors } from '@/constants/colors';
+import { XCircle } from 'lucide-react-native';
 
-export default function SuccessScreen() {
+export default function CancelScreen() {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
       <View style={styles.content}>
-        <CheckCircle size={64} color={'#b8a0ff'} style={styles.icon} />
+        <XCircle size={64} color={'#ffb4b4'} style={styles.icon} />
 
-        <Text style={styles.title}>Merci pour votre commande ✨</Text>
+        <Text style={styles.title}>Abonnement annulé</Text>
         <Text style={styles.message}>
-          Votre paiement a été confirmé avec succès. Un e-mail de confirmation vous sera envoyé sous peu.
+          Votre abonnement n’a pas été confirmé. Vous pouvez réessayer à tout moment depuis la page Offres.
         </Text>
 
         <TouchableOpacity style={styles.button} onPress={() => router.replace('/')}>
