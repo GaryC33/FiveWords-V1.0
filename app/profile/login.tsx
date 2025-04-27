@@ -9,12 +9,20 @@ import {
   ScrollView,
   ImageBackground,
   Alert,
+  Pressable,
+  Linking,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Mail, Lock, WrapText } from 'lucide-react-native';
-
 import { supabase } from '@/services/supabase';
 import { makeRedirectUri } from 'expo-auth-session';
+import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+
+GoogleSignin.configure({
+  scopes: ['email'],
+  webClientId: '640637681812-7lffko70vb8roq1j6jhrfuj4htco6214.apps.googleusercontent.com', // à récupérer dans Google Console
+});
+
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -76,7 +84,37 @@ export default function LoginScreen() {
     }
   };
   
-
+  const handleGoogleNativeLogin = async () => {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+  
+      const { idToken } = await GoogleSignin.getTokens();
+  
+      if (!idToken) throw new Error('Aucun ID token reçu');
+  
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
+      });
+  
+      if (error) {
+        console.error('Erreur Supabase:', error.message);
+        setError('Échec de la connexion avec Google');
+      } else {
+        console.log('Connexion réussie via Supabase', data);
+        router.replace('/profile/profile');
+      }
+    } catch (error: any) {
+      if (error.code === statusCodes.SIGN_IN_CANCELLED) {
+        console.log('Connexion annulée par l’utilisateur');
+      } else {
+        console.error('Erreur Google Signin:', error);
+        setError('Erreur Google Sign-In');
+      }
+    }
+  };
+  
   const handlePasswordReset = async () => {
     if (!email || !email.includes('@')) {
       return Alert.alert('Adresse invalide', 'Veuillez entrer une adresse e-mail valide.');
@@ -158,6 +196,14 @@ export default function LoginScreen() {
                 {loading ? 'Connexion...' : 'Se connecter'}
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity
+  style={[styles.googleButton, loading && styles.loginButtonDisabled]}
+  onPress={handleGoogleNativeLogin}
+  disabled={loading}
+>
+  <Text style={styles.loginButtonText}>Se connecter avec Google</Text>
+</TouchableOpacity>
+
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -171,6 +217,11 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
           </View>
+          <Pressable onPress={() => Linking.openURL('https://cinq-mots-pour-dodo.store/privacy.html')}>
+  <Text style={{ textDecorationLine: 'underline' }}>
+    Politique de confidentialité
+  </Text>
+</Pressable>
         </View>
       </ScrollView>
     </ImageBackground>
@@ -186,6 +237,19 @@ const styles = StyleSheet.create({
     minHeight: '100%',
     paddingBottom: 40,
   },
+  googleButton: {
+    backgroundColor: '#4285F4',
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 5,
+  },
+  
   content: {
     flex: 1,
     padding: 20,

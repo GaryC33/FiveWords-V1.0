@@ -2,10 +2,17 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
 
-const INTERSTITIAL_UNIT_ID = 'ca-app-pub-9132892858077789/4964727079';
 const TEST_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
-const TEST_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917';
-const TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
+const PROD_INTERSTITIAL_ID_ANDROID = 'ca-app-pub-9132892858077789/4964727079';
+const PROD_INTERSTITIAL_ID_IOS = 'ca-app-pub-9132892858077789/4106623744';
+
+const getInterstitialAdUnitId = () => {
+  if (__DEV__) return TEST_INTERSTITIAL_ID;
+  return Platform.select({
+    android: PROD_INTERSTITIAL_ID_ANDROID,
+    ios: PROD_INTERSTITIAL_ID_IOS,
+  })!;
+};
 
 export default function Interstitial({
   visible,
@@ -16,8 +23,9 @@ export default function Interstitial({
 }) {
   const [fallback, setFallback] = useState(false);
   const [countdown, setCountdown] = useState(5);
+
   const adRef = useRef(
-    InterstitialAd.createForAdRequest(INTERSTITIAL_UNIT_ID, {
+    InterstitialAd.createForAdRequest(getInterstitialAdUnitId(), {
       requestNonPersonalizedAdsOnly: true,
     })
   ).current;
@@ -37,7 +45,6 @@ export default function Interstitial({
       });
 
       const errorListener = adRef.addAdEventListener(AdEventType.ERROR, () => {
-        // Retirer le timeout, déclencher directement le fallback
         setFallback(true);
       });
 
@@ -52,7 +59,6 @@ export default function Interstitial({
     return unsubscribe;
   }, [visible]);
 
-  // Fallback : countdown
   useEffect(() => {
     if (!fallback || !visible) return;
 
@@ -61,7 +67,6 @@ export default function Interstitial({
       setCountdown((prev) => {
         if (prev === 1) {
           clearInterval(interval);
-          // Important : éviter setState during render
           setTimeout(() => onClose(), 0);
         }
         return prev - 1;

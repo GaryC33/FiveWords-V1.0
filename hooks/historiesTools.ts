@@ -67,14 +67,14 @@ export async function canSaveToSupabase(): Promise<true | string> {
   return subEnd && subEnd > now ? true : 'Fonction réservée aux abonnés';
 }
 
-export async function saveStoryToSupabase(story: SavedStory) {
+export async function saveStoryToSupabase(story: SavedStory): Promise<string | null> {
   try {
-    const session = (await supabase.auth.getSession()).data.session;
+    const { data: { session } } = await supabase.auth.getSession();
     const user_id = session?.user?.id;
     const token = session?.access_token;
 
-    if (!user_id || !token) throw new Error('Utilisateur non connecté');
-    if (!story.title || !story.content) throw new Error('Titre ou contenu manquant');
+    if (!user_id || !token) throw new Error('Utilisateur non connecté.');
+    if (!story.title || !story.content) throw new Error('Titre ou contenu manquant.');
 
     const canSave = await canSaveToSupabase();
     if (canSave !== true) {
@@ -82,7 +82,7 @@ export async function saveStoryToSupabase(story: SavedStory) {
         { text: 'Annuler', style: 'cancel' },
         { text: 'Voir les offres', onPress: () => router.push('/offres') },
       ]);
-      return;
+      return null;
     }
 
     const payload = {
@@ -91,7 +91,7 @@ export async function saveStoryToSupabase(story: SavedStory) {
       words: story.words ?? [],
     };
 
-    console.log('📤 Payload envoyé à save-story :', payload);
+    console.log('📤 Envoi à Supabase save-story:', payload);
 
     const response = await fetch('https://qstvlvkdzrewqqxaesho.functions.supabase.co/save-story', {
       method: 'POST',
@@ -104,13 +104,17 @@ export async function saveStoryToSupabase(story: SavedStory) {
 
     const result = await response.json();
 
-    if (!response.ok || !result.success) {
-      console.error('❌ Erreur sauvegarde Supabase :', result.error || 'inconnue');
-    } else {
-      console.log('✅ Histoire sauvegardée avec id', result.id);
+    if (!response.ok || !result.success || !result.id) {
+      console.error('❌ Erreur sauvegarde Supabase :', result.error || 'Réponse invalide');
+      return null;
     }
+
+    console.log('✅ Supabase : Histoire enregistrée avec ID', result.id);
+    return result.id;
+
   } catch (err) {
-    console.error('❌ Exception sauvegarde Supabase :', err instanceof Error ? err.message : err);
+    console.error('❌ Exception Supabase :', err instanceof Error ? err.message : err);
+    return null;
   }
 }
 

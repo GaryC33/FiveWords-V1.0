@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
   ScrollView,
   Image,
   ImageBackground,
@@ -17,11 +16,8 @@ import {
   WrapText,
   Settings,
   LogOut,
-  Baby,
-  BadgeCheck,
   CirclePlus as Edit2,
   Star,
-  User,
 } from 'lucide-react-native';
 import { supabase } from '@/services/supabase';
 import { useProfileTools } from '@/hooks/profilesTools';
@@ -121,7 +117,51 @@ const [inputValue, setInputValue] = useState('');
       setError('Une erreur est survenue lors de la déconnexion');
     }
   };
-
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Supprimer votre compte",
+      "Cette action est définitive et supprimera toutes vos données associées.\n\n⚠️ Si vous avez un abonnement via l'App Store, pensez à l'annuler depuis votre compte Apple.",
+      [
+        {
+          text: "Gérer mes abonnements",
+          onPress: () =>
+            router.push("https://apps.apple.com/account/subscriptions"),
+        },
+        { text: "Annuler", style: "cancel" },
+        {
+          text: "Supprimer maintenant",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const session = (await supabase.auth.getSession()).data.session;
+              const user = session?.user;
+              if (!user) throw new Error("Utilisateur non connecté.");
+  
+              // Appelle la fonction Supabase sécurisée
+              const { error } = await supabase.rpc("delete_user");
+  
+              if (error) throw error;
+  
+              // Optionnel : vider le local storage
+              await AsyncStorage.clear();
+  
+              Alert.alert(
+                "Compte supprimé",
+                "Votre compte et toutes vos données ont été supprimés avec succès."
+              );
+  
+              await supabase.auth.signOut();
+              router.replace("/profile/login");
+            } catch (err: any) {
+              Alert.alert("Erreur", err.message || "Une erreur est survenue.");
+            }
+          },
+        },
+      ]
+    );
+  };
+  
+  
   const handleReward = async () => {
     const session = (await supabase.auth.getSession()).data.session;
     if (!session?.access_token) return;
@@ -349,7 +389,12 @@ const [inputValue, setInputValue] = useState('');
                 <LogOut size={24} color="#ae6e1f" />
                 <Text style={[styles.buttonText, styles.logoutButtonText]}>Se déconnecter</Text>
               </TouchableOpacity>
+              <TouchableOpacity style={[styles.button, styles.deleteButton]} onPress={handleDeleteAccount}>
+  <Text style={[styles.buttonText, styles.deleteButtonText]}>🗑 Supprimer votre compte</Text>
+</TouchableOpacity>
+
             </View>
+            
           </ImageBackground>
         </ScrollView>
     
@@ -477,7 +522,15 @@ const styles = StyleSheet.create({
   avatarContainerCentered: { alignItems: 'center', justifyContent: 'center', position: 'relative', marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 5 },
   avatarLarge: { width: 160, height: 160, borderRadius: 80, borderWidth: 5, borderColor: '#fff', backgroundColor: '#fff' },
 
-
+  deleteButton: {
+    backgroundColor: '#d9534f',
+  },
+  deleteButtonText: {
+    color: '#fff',
+    fontFamily: 'Poppins-Bold',
+    fontSize: 16,
+  },
+  
   badgeContainer: {    marginTop: 12,    alignItems: 'center',  },
   avatarWrapper: {
     width: 160,

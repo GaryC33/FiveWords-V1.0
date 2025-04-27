@@ -1,15 +1,23 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Modal, View, Text, StyleSheet, Button } from 'react-native';
+import { Modal, View, Text, StyleSheet, Button, Platform } from 'react-native';
 import {
   RewardedAd,
   RewardedAdEventType,
   AdEventType,
 } from 'react-native-google-mobile-ads';
 
-const REWARDED_UNIT_ID = 'ca-app-pub-9132892858077789/1596876441';
-const TEST_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
+// IDs
 const TEST_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917';
-const TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
+const PROD_REWARDED_ID_ANDROID = 'ca-app-pub-9132892858077789/1596876441';
+const PROD_REWARDED_ID_IOS = 'ca-app-pub-9132892858077789/6163904898';
+
+const getRewardedAdUnitId = () => {
+  if (__DEV__) return TEST_REWARDED_ID;
+  return Platform.select({
+    android: PROD_REWARDED_ID_ANDROID,
+    ios: PROD_REWARDED_ID_IOS,
+  })!;
+};
 
 type Props = {
   visible: boolean;
@@ -26,7 +34,7 @@ export default function Rewarded({ visible, onClose }: Props) {
     if (!visible) return;
 
     rewarded.current = false;
-    const newAd = RewardedAd.createForAdRequest(REWARDED_UNIT_ID, {
+    const newAd = RewardedAd.createForAdRequest(getRewardedAdUnitId(), {
       requestNonPersonalizedAdsOnly: true,
     });
 
@@ -40,20 +48,14 @@ export default function Rewarded({ visible, onClose }: Props) {
 
     let fallbackTimeout: NodeJS.Timeout;
 
-    const loadedListener = ad.addAdEventListener(
-      RewardedAdEventType.LOADED,
-      () => {
-        setIsAdLoaded(true);
-        if (adStarted) ad.show(); // si demande déjà faite
-      }
-    );
+    const loadedListener = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+      setIsAdLoaded(true);
+      if (adStarted) ad.show();
+    });
 
-    const rewardListener = ad.addAdEventListener(
-      RewardedAdEventType.EARNED_REWARD,
-      () => {
-        rewarded.current = true;
-      }
-    );
+    const rewardListener = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+      rewarded.current = true;
+    });
 
     const closeListener = ad.addAdEventListener(AdEventType.CLOSED, () => {
       onClose(rewarded.current);
@@ -77,7 +79,7 @@ export default function Rewarded({ visible, onClose }: Props) {
   const handleStartAd = () => {
     if (!ad) return;
     setAdStarted(true);
-    if (isAdLoaded) ad.show(); // instantané si déjà prêt
+    if (isAdLoaded) ad.show();
   };
 
   return (

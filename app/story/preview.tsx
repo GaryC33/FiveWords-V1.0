@@ -33,28 +33,37 @@ export default function StoryViewerScreen() {
   const savedRef = useRef(false);
 
   useEffect(() => {
-    if (!isSubscriber || savedRef.current) return;
+    if (savedRef.current) return;
   
-    const newStory: SavedStory = {
-      id: Date.now().toString(),
-      title: params.title,
-      content: params.content,
-      imageUrl: params.illustration,
-      date: new Date().toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      }),
-      words,
-      isLastGenerated: true,
+    const save = async () => {
+      const newStory: SavedStory = {
+        id: Date.now().toString(), // temporaire
+        title: params.title,
+        content: params.content,
+        imageUrl: params.illustration,
+        date: new Date().toLocaleDateString('fr-FR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        }),
+        words,
+        isLastGenerated: true,
+      };
+  
+      // ➕ Sauvegarde dans Supabase si abonné
+      if (isSubscriber) {
+        const supaId = await saveStoryToSupabase(newStory);
+        if (supaId) newStory.id = supaId;
+      }
+  
+      // ✅ Toujours sauvegarder en local
+      await saveAndLoadStories(newStory);
+  
+      savedRef.current = true;
     };
   
-    saveStoryToSupabase(newStory);
-    saveAndLoadStories(newStory);
-  
-    savedRef.current = true;
-  }, [isSubscriber]);
-  
+    save();
+  }, []);
   
   
 

@@ -4,7 +4,6 @@ import {
   Text,
   Image,
   StyleSheet,
-  Platform,
   TouchableOpacity,
   Share,
   Alert,
@@ -12,8 +11,8 @@ import {
 import { X, Share2, BookOpen, Lock, Download } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { supabase, isSubscriber } from '@/services/supabase';
+import { ReportButton } from '@/components/reports';
 
-// Retiré : import RainbowWavyWord
 
 type Variant = 'full' | 'compact';
 
@@ -225,6 +224,14 @@ if (parentNames && childNames) {
             </Text>
           ))}
         </View>
+        <ReportButton
+  storyId={id || ''}
+  title={title}
+  content={content}
+  imageUrl={imageUrl}
+  words={words}
+/>
+
 
         <View style={styles.footer}>
           <Image

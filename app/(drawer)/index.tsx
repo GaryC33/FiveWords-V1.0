@@ -8,6 +8,7 @@ import AnimatedWordBubble from '@/components/AnimatedWordBubble';
 import LoadingOverlay from '@/components/LoadingOverlay';
 import MagicWordModal from '@/components/MagicWordModal';
 import PlumetteBadge from '@/components/PlumetteBadge';
+import WelcomeModal from '@/components/WelcomeModal';
 
 import Banner from '@/app/admob/Banner'; // Ad banner component
 import Rewarded from '@/app/admob/Rewarded'; // Rewarded ad component
@@ -31,6 +32,7 @@ export default function CreateScreen() {
 
   const isSubscriber = status === 'subscriber';
   const isConnected = status === 'connected';
+  const isLoggedIn = isConnected || isSubscriber;
 
   const [words, setWords] = useState(['', '', '', '', '']); // Array of words entered by the user
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // Selected tags (if any)
@@ -210,7 +212,6 @@ export default function CreateScreen() {
               }}
             />
 
-            <LoadingOverlay visible={loading} />
 
             <View style={styles.wordArea}>
               <View style={styles.cloudsContainer}>
@@ -267,30 +268,42 @@ export default function CreateScreen() {
               </View>
             )}
 
-            <TouchableOpacity style={styles.generateButton} onPress={handleGenerateStory} disabled={loading}>
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <View style={{ alignItems: 'center' }}>
-                  <Text style={styles.generateButtonText}>Créer votre histoire</Text>
+<TouchableOpacity
+  style={styles.generateButton}
+  onPress={() => {
+    if (!isLoggedIn) {
+      router.push('/profile/login');
+    } else {
+      handleGenerateStory();
+    }
+  }}
+  disabled={loading}
+>
+  {loading ? (
+    <ActivityIndicator color="#fff" />
+  ) : (
+    <View style={{ alignItems: 'center' }}>
+      <Text style={styles.generateButtonText}>
+        {!isLoggedIn ? "S'inscrire pour générer une histoire" : "Créer votre histoire"}
+      </Text>
 
-                  {!isSubscriber && (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-                      <Text style={styles.generateButtonText}>-1</Text>
-                      <Image
-                        source={require('@/assets/icons/plumette.png')}
-                        style={styles.icon}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  )}
+      {isLoggedIn && !isSubscriber && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+          <Text style={styles.generateButtonText}>Retire 1 </Text>
+          <Image
+            source={require('@/assets/icons/plumette.png')}
+            style={styles.icon}
+            resizeMode="contain"
+          />
+        </View>
+      )}
 
-                  {isSubscriber && (
-                    <Text style={styles.plumetteCounterText}>(illimitée)</Text>
-                  )}
-                </View>
-              )}
-            </TouchableOpacity>
+      {isSubscriber && (
+        <Text style={styles.plumetteCounterText}>(illimitée)</Text>
+      )}
+    </View>
+  )}
+</TouchableOpacity>
 
             <TouchableOpacity style={styles.iconButton} onPress={() => {
               setWords(['', '', '', '', '']);
@@ -311,6 +324,7 @@ export default function CreateScreen() {
           <Banner isSubscriber={isSubscriber} position="bottom" />
         </ScrollView>
       </View>
+      <LoadingOverlay visible={loading} />
 
       {showRewarded && (
         <Rewarded
@@ -323,6 +337,8 @@ export default function CreateScreen() {
           }}
         />
       )}
+      <WelcomeModal />
+
     </>
   );
 }

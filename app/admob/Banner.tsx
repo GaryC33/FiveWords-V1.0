@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import {
   BannerAd,
   BannerAdSize,
@@ -10,23 +10,32 @@ type BannerProps = {
   isSubscriber?: boolean;
 };
 
-// ✅ Ton ID AdMob réel
-const PROD_BANNER_ID = 'ca-app-pub-9132892858077789/6299594703';
-const TEST_INTERSTITIAL_ID = 'ca-app-pub-3940256099942544/1033173712';
-const TEST_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917';
+// ✅ IDs de production
+const PROD_BANNER_ID_ANDROID = 'ca-app-pub-9132892858077789/6299594703';
+const PROD_BANNER_ID_IOS = 'ca-app-pub-9132892858077789/5372200426';
+
+// ✅ ID de test universel
 const TEST_BANNER_ID = 'ca-app-pub-3940256099942544/6300978111';
 
-export default function Banner({ position = 'bottom', isSubscriber = false }: BannerProps): JSX.Element {
+// ✅ Sélection dynamique selon l’environnement et la plateforme
+const getBannerAdUnitId = () => {
+  if (__DEV__) return TEST_BANNER_ID;
+
+  return Platform.select({
+    android: PROD_BANNER_ID_ANDROID,
+    ios: PROD_BANNER_ID_IOS,
+  })!;
+};
+
+export default function Banner({ position = 'bottom', isSubscriber = false }: BannerProps): JSX.Element | null {
   const [loaded, setLoaded] = useState(false);
 
-  if (isSubscriber) return <></>;
+  if (isSubscriber) return null;
 
   return (
     <View style={[styles.banner, position === 'top' ? styles.top : styles.bottom]}>
- 
-
       <BannerAd
-        unitId={PROD_BANNER_ID}
+        unitId={getBannerAdUnitId()}
         size={BannerAdSize.ANCHORED_ADAPTIVE_BANNER}
         requestOptions={{
           requestNonPersonalizedAdsOnly: true,
@@ -39,7 +48,7 @@ export default function Banner({ position = 'bottom', isSubscriber = false }: Ba
       />
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   banner: {
@@ -55,16 +64,5 @@ const styles = StyleSheet.create({
   bottom: {
     position: 'absolute',
     bottom: 0,
-  },
-  fallback: {
-    backgroundColor: '#ddd',
-    paddingVertical: 10,
-    width: '100%',
-    alignItems: 'center',
-  },
-  text: {
-    color: '#333',
-    fontSize: 14,
-    fontStyle: 'italic',
   },
 });
