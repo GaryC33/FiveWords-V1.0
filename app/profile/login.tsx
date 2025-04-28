@@ -17,12 +17,12 @@ import { Mail, Lock, WrapText } from 'lucide-react-native';
 import { supabase } from '@/services/supabase';
 import { makeRedirectUri } from 'expo-auth-session';
 import { GoogleSignin, statusCodes } from '@react-native-google-signin/google-signin';
+import * as AppleAuthentication from 'expo-apple-authentication';
 
 GoogleSignin.configure({
   scopes: ['email'],
-  webClientId: '640637681812-7lffko70vb8roq1j6jhrfuj4htco6214.apps.googleusercontent.com', // à récupérer dans Google Console
+  webClientId: '640637681812-7lffko70vb8roq1j6jhrfuj4htco6214.apps.googleusercontent.com',
 });
-
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -34,47 +34,31 @@ export default function LoginScreen() {
     try {
       setError('');
       setLoading(true);
-  
+
       if (!email || !password) return setError('Veuillez remplir tous les champs.');
       if (!email.includes('@')) return setError('L’adresse email semble incorrecte.');
-  
-      const {
-        data: { user },
-        error: signInError,
-      } = await supabase.auth.signInWithPassword({ email, password });
-  
+
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+
       if (signInError) {
-        setError(
-          signInError.message === 'Invalid login credentials'
-            ? 'Email ou mot de passe incorrect.'
-            : 'Une erreur est survenue.'
-        );
+        setError(signInError.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : 'Une erreur est survenue.');
         return;
       }
-  
+
       if (user) {
         const { error: insertError } = await supabase
           .from('profiles')
-          .insert([
-            {
-              user_id: user.id,
-              avatar_url: '6.png',
-              first_names: [],
-              children_names: [],
-              current_period_end: null,
-              mail_log: user.email, // ← ajout ici
-            },
-          ])
+          .insert([{ user_id: user.id, avatar_url: '6.png', first_names: [], children_names: [], current_period_end: null, mail_log: user.email }])
           .select()
           .single();
-  
+
         if (insertError && !insertError.message.includes('duplicate key')) {
           console.error('Erreur création profil :', insertError);
           Alert.alert("Erreur", "Impossible de créer le profil utilisateur.");
           return;
         }
       }
-  
+
       router.replace('/profile/profile');
     } catch (err) {
       console.error('Login error:', err);
@@ -83,21 +67,17 @@ export default function LoginScreen() {
       setLoading(false);
     }
   };
-  
+
   const handleGoogleNativeLogin = async () => {
     try {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
-  
       const { idToken } = await GoogleSignin.getTokens();
-  
+
       if (!idToken) throw new Error('Aucun ID token reçu');
-  
-      const { data, error } = await supabase.auth.signInWithIdToken({
-        provider: 'google',
-        token: idToken,
-      });
-  
+
+      const { data, error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken });
+
       if (error) {
         console.error('Erreur Supabase:', error.message);
         setError('Échec de la connexion avec Google');
@@ -114,7 +94,39 @@ export default function LoginScreen() {
       }
     }
   };
-  
+
+  const handleAppleNativeLogin = async () => {
+    try {
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
+      });
+
+      const { identityToken } = credential;
+
+      if (!identityToken) throw new Error('Pas de jeton d’identification reçu');
+
+      const { data, error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: identityToken });
+
+      if (error) {
+        console.error('Erreur Supabase:', error.message);
+        setError('Échec de la connexion avec Apple');
+      } else {
+        console.log('Connexion réussie via Apple', data);
+        router.replace('/profile/profile');
+      }
+    } catch (error: any) {
+      if (error.code === 'ERR_CANCELED') {
+        console.log('Connexion annulée par l’utilisateur');
+      } else {
+        console.error('Erreur Apple Signin:', error);
+        setError('Erreur lors de la connexion avec Apple');
+      }
+    }
+  };
+
   const handlePasswordReset = async () => {
     if (!email || !email.includes('@')) {
       return Alert.alert('Adresse invalide', 'Veuillez entrer une adresse e-mail valide.');
@@ -126,21 +138,14 @@ export default function LoginScreen() {
       });
 
       if (error) throw error;
-      Alert.alert(
-        'Email envoyé',
-        'Un lien de réinitialisation vous a été envoyé par e-mail.'
-      );
+      Alert.alert('Email envoyé', 'Un lien de réinitialisation vous a été envoyé par e-mail.');
     } catch (err) {
       Alert.alert('Erreur', "Impossible d'envoyer l’e-mail de réinitialisation.");
     }
   };
 
   return (
-    <ImageBackground
-      source={require('@/assets/backgrounds/dreamy-stars1.png')}
-      resizeMode="cover"
-      style={styles.background}
-    >
+    <ImageBackground source={require('@/assets/backgrounds/dreamy-stars1.png')} resizeMode="cover" style={styles.background}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(drawer)' as const)}>
           <WrapText size={24} color="#6b5b51" />
@@ -192,18 +197,24 @@ export default function LoginScreen() {
               onPress={handleLogin}
               disabled={loading}
             >
-              <Text style={styles.loginButtonText}>
-                {loading ? 'Connexion...' : 'Se connecter'}
-              </Text>
+              <Text style={styles.loginButtonText}>{loading ? 'Connexion...' : 'Se connecter'}</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-  style={[styles.googleButton, loading && styles.loginButtonDisabled]}
-  onPress={handleGoogleNativeLogin}
-  disabled={loading}
->
-  <Text style={styles.loginButtonText}>Se connecter avec Google</Text>
-</TouchableOpacity>
 
+            <TouchableOpacity
+              style={[styles.googleButton, loading && styles.loginButtonDisabled]}
+              onPress={handleGoogleNativeLogin}
+              disabled={loading}
+            >
+              <Text style={styles.loginButtonText}>Se connecter avec Google</Text>
+            </TouchableOpacity>
+
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+              buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.BLACK}
+              cornerRadius={20}
+              style={{ width: '100%', height: 50, marginBottom: 24 }}
+              onPress={handleAppleNativeLogin}
+            />
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
@@ -217,11 +228,10 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
           </View>
+
           <Pressable onPress={() => Linking.openURL('https://cinq-mots-pour-dodo.store/privacy.html')}>
-  <Text style={{ textDecorationLine: 'underline' }}>
-    Politique de confidentialité
-  </Text>
-</Pressable>
+            <Text style={{ textDecorationLine: 'underline' }}>Politique de confidentialité</Text>
+          </Pressable>
         </View>
       </ScrollView>
     </ImageBackground>

@@ -19,7 +19,8 @@
       "bundleIdentifier": "com.cinqmotspourdo.app",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
