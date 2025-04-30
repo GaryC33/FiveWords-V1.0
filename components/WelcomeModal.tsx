@@ -1,6 +1,9 @@
+// WelcomeModal.tsx
 import React, { useEffect, useState } from 'react';
 import { Modal, Switch, View, Text, ScrollView, StyleSheet, Pressable, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY = 'hide_welcome_modal_date';
 
 const WelcomeModal = () => {
   const [visible, setVisible] = useState(false);
@@ -8,15 +11,19 @@ const WelcomeModal = () => {
 
   useEffect(() => {
     const checkPreference = async () => {
-      const hide = await AsyncStorage.getItem('hide_welcome_modal');
-      if (hide !== 'true') setVisible(true);
+      const storedDate = await AsyncStorage.getItem(STORAGE_KEY);
+      const today = new Date().toISOString().substring(0, 10);
+      if (storedDate !== today) {
+        setVisible(true);
+      }
     };
     checkPreference();
   }, []);
 
   const handleClose = async () => {
+    const today = new Date().toISOString().substring(0, 10);
     if (dontShowAgain) {
-      await AsyncStorage.setItem('hide_welcome_modal', 'true');
+      await AsyncStorage.setItem(STORAGE_KEY, today);
     }
     setVisible(false);
   };
@@ -57,8 +64,12 @@ const WelcomeModal = () => {
           </ScrollView>
 
           <View style={styles.checkboxContainer}>
-          <Switch value={dontShowAgain} onValueChange={setDontShowAgain} trackColor={{ false: '#999', true: '#2A2F4F' }} />
-<Text style={styles.text}>Ne plus afficher</Text>
+            <Switch
+              value={dontShowAgain}
+              onValueChange={setDontShowAgain}
+              trackColor={{ false: '#999', true: '#2A2F4F' }}
+            />
+            <Text style={styles.text}>Ne plus afficher aujourd’hui</Text>
           </View>
 
           <Pressable onPress={handleClose} style={styles.button}>

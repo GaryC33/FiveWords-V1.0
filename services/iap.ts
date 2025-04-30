@@ -36,13 +36,33 @@ export async function getSubscriptions() {
 export async function requestSubscription(): Promise<void> {
   try {
     if (!itemSkus || itemSkus.length === 0) throw new Error('SKU non défini');
-    await RNIap.requestSubscription({ sku: itemSkus[0] });
-    console.log('▶️ Demande d’abonnement envoyée');
+
+    const subs = await RNIap.getSubscriptions({ skus: itemSkus });
+    console.log('📦 Abonnements disponibles :', subs);
+
+    if (!subs.length || !('subscriptionOfferDetails' in subs[0]) || !subs[0].subscriptionOfferDetails?.length) {
+      throw new Error('Aucune offre d’abonnement disponible.');
+    }
+
+    const offerToken = subs[0].subscriptionOfferDetails[0].offerToken;
+
+    await RNIap.requestSubscription({
+      sku: itemSkus[0],
+      subscriptionOffers: [
+        {
+          sku: itemSkus[0],
+          offerToken,
+        },
+      ],
+    });
+
+    console.log('✅ Demande d’abonnement envoyée avec offerToken');
+
   } catch (err) {
     console.error('❌ requestSubscription error:', err);
+    throw err;
   }
 }
-
 // Vérifier les achats disponibles (ex: après login)
 export async function getAvailablePurchases() {
   try {

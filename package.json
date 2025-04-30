@@ -45,6 +45,7 @@
     "expo-symbols": "^0.2.2",
     "expo-system-ui": "~4.0.9",
     "jsonwebtoken": "^9.0.2",
+    "jwt-decode": "^4.0.0",
     "lucide-react-native": "^0.475.0",
     "mime": "^4.0.7",
     "openai": "^4.28.0",
@@ -66,6 +67,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@types/jwt-decode": "^2.2.1",
     "@types/react": "~18.3.12",
     "react-native-svg-transformer": "^1.5.0",
     "typescript": "^5.3.3",

@@ -23,7 +23,7 @@ import { supabase } from '@/services/supabase';
 import { useProfileTools } from '@/hooks/profilesTools';
 import Rewarded from '@/app/admob/Rewarded';
 import Banner from '@/app/admob/Banner';
-import { usePlumetteTimer } from '@/hooks/plumettesTools';
+import { usePlumetteTimer } from '@/hooks/plumettesTimer';
 import PlumetteBadge from '@/components/PlumetteBadge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

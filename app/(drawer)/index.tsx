@@ -9,13 +9,14 @@ import LoadingOverlay from '@/components/LoadingOverlay';
 import MagicWordModal from '@/components/MagicWordModal';
 import PlumetteBadge from '@/components/PlumetteBadge';
 import WelcomeModal from '@/components/WelcomeModal';
+import ConfirmModal from '@/components/ConfirmModal';
 
 import Banner from '@/app/admob/Banner'; // Ad banner component
 import Rewarded from '@/app/admob/Rewarded'; // Rewarded ad component
 import Interstitial from '@/app/admob/Interstitial'; // Interstitial ad component
+import { usePlumetteTimer } from '@/hooks/plumettesTimer';
 
 import { useProfileTools } from '@/hooks/profilesTools'; // Hook for user profile data
-import { usePlumetteTools } from '@/hooks/plumettesTools'; // Hook for managing "plumettes" (credits)
 import { WordSelector } from '@/hooks/wordsTools'; // Hook/component for word selection
 import { supabase } from '@/services/supabase'; // Supabase database connection
 import { generateStoryFromEdge, pickRandom } from '@/services/supabase'; // Supabase functions for story generation
@@ -28,12 +29,13 @@ export default function CreateScreen() {
   // Profile-related state and functions
   const { profile, status, reloadProfile } = useProfileTools();
   // Plumettes (credits) management
-  const { nextPlumetteTimer, checkPlumetteWithAlert } = usePlumetteTools({ profile: profile ?? {}, onRefresh: reloadProfile });
+  const nextPlumetteTimer = usePlumetteTimer(profile?.last_plumette_recharge ?? null);
 
   const isSubscriber = status === 'subscriber';
   const isConnected = status === 'connected';
   const isLoggedIn = isConnected || isSubscriber;
 
+  
   const [words, setWords] = useState(['', '', '', '', '']); // Array of words entered by the user
   const [selectedTags, setSelectedTags] = useState<string[]>([]); // Selected tags (if any)
   const [popularWords, setPopularWords] = useState<string[]>([]); // Popular word suggestions
@@ -49,7 +51,7 @@ export default function CreateScreen() {
   const [becomeHeroes, setBecomeHeroes] = useState(false); // Boolean to indicate if "become heroes" mode is active
   const randomMorale = pickRandom(Object.values(moraleCategories).flat()); // Randomly selected morale
   const randomStyle = pickRandom(Object.values(stylesEnfantsCategories).flat()); // Randomly selected art style
-
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   // --- Refs ---
 
   const scrollViewRef = useRef<ScrollView | null>(null); // Ref to the scroll view
@@ -103,21 +105,16 @@ export default function CreateScreen() {
       return Alert.alert('5 mots requis', 'Merci de compléter les 5 mots magiques.');
     }
   
-    if (!profile?.user_id) return router.push('/profile/login');
+    if (!profile?.user_id) {
+      return router.push('/profile/login');
+    }
   
     setIsExploding(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
   
-    const allowed = await checkPlumetteWithAlert(openRewarded);
-    if (!allowed) {
-      setIsExploding(false);
-      return;
-    }
-  
     setLoading(true);
     await reloadProfile();
   
-    // ✅ Rendu obligatoire même pour non-abonné
     const finalMorale = selectedTheme
       ? pickRandom(moraleCategories[selectedTheme] ?? morales)
       : pickRandom(Object.values(moraleCategories).flat());
@@ -159,24 +156,32 @@ export default function CreateScreen() {
     }
   };
   
-
+  const handleAd = () => {
+    setConfirmModalVisible(false);
+    setShowInterstitial(true);
+  };
+  
   // Function to handle the overall story generation process (with input validation)
   const handleGenerateStory = () => {
-    scrollViewRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
-
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  
     const filledWords = words.filter(w => w.trim() !== '');
     const remaining = 5 - filledWords.length;
-
+  
     if (remaining > 0) {
-      return Alert.alert('5 mots requis', `Il te manque encore ${remaining} mot${remaining > 1 ? 's' : ''} magique${remaining > 1 ? 's' : ''}.`);
+      return Alert.alert(
+        '5 mots requis',
+        `Il te manque encore ${remaining} mot${remaining > 1 ? 's' : ''} magique${remaining > 1 ? 's' : ''}.`
+      );
     }
-
+  
     if (isSubscriber) {
-      triggerStoryGeneration(); // Generate if subscriber
+      triggerStoryGeneration(); // accès direct
     } else {
-      setShowInterstitial(true); // Show interstitial ad if not subscriber
+      setConfirmModalVisible(true); // déclenche la modale
     }
   };
+  
 
   // Determine plumette count display
   const plumetteCount = isSubscriber
@@ -289,7 +294,7 @@ export default function CreateScreen() {
 
       {isLoggedIn && !isSubscriber && (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-          <Text style={styles.generateButtonText}>Retire 1 </Text>
+          <Text style={styles.generateButtonText}></Text>
           <Image
             source={require('@/assets/icons/plumette.png')}
             style={styles.icon}
@@ -336,8 +341,18 @@ export default function CreateScreen() {
             setShowRewarded(false);
           }}
         />
+        
       )}
       <WelcomeModal />
+      <ConfirmModal
+  visible={confirmModalVisible}
+  onCancel={() => setConfirmModalVisible(false)}
+  onConfirm={handleAd}
+  plumetteLeft={profile?.plumette_left ?? 0}
+  lastPlumetteRecharge={profile?.last_plumette_recharge ?? null}
+  goToSubscribe={() => router.push('/offres')}
+/>
+
 
     </>
   );
