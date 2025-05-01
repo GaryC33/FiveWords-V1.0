@@ -4,13 +4,16 @@ import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from 
 import { useFonts as usePoppins, Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { useFonts as useQuicksand, Quicksand_400Regular } from '@expo-google-fonts/quicksand';
 import { SystemBars } from "react-native-edge-to-edge";
-
+import { useConsentManager } from '@/hooks/useConsentManager';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { usePurchaseListener } from '@/services/iap'; // 👈 ajout
 import { supabase } from '@/services/supabase';
 
 export default function RootLayout() {
   useFrameworkReady();
-
+  usePurchaseListener(); // 👈 écouteur lancé une seule fois
+  useConsentManager();
+  
   const [fontsLoaded, fontError] = useFonts({
     'Nunito-Regular': Nunito_400Regular,
     'Nunito-SemiBold': Nunito_600SemiBold,
@@ -20,7 +23,6 @@ export default function RootLayout() {
     'Quicksand-Regular': Quicksand_400Regular,
   });
 
-  // Écoute les changements d’authentification (facultatif mais conservé)
   React.useEffect(() => {
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('🌀 Auth state changed:', event);
@@ -31,7 +33,6 @@ export default function RootLayout() {
     };
   }, []);
 
-  // Si les polices ne sont pas prêtes, ne rien afficher
   if (!fontsLoaded && !fontError) {
     return null;
   }
@@ -41,7 +42,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(drawer)" />
       </Stack>
-      <SystemBars  style="light" />
+      <SystemBars style="light" />
     </>
   );
 }

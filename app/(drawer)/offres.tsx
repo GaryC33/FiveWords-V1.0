@@ -87,6 +87,18 @@ export default function OffresScreen() {
               <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
                 <Text style={styles.ctaButtonText}>✨ Je m’abonne</Text>
               </TouchableOpacity>
+              <Text style={styles.legalText}>
+  Offre Premium – 1 mois{'\n'}
+  Prix : 5,00 € / mois – Renouvellement automatique{'\n'}
+</Text>
+
+<TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/privacy.html')}>
+  <Text style={styles.linkText}>Politique de confidentialité</Text>
+</TouchableOpacity>
+
+<TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/terms.html')}>
+  <Text style={styles.linkText}>Conditions d’utilisation (EULA)</Text>
+</TouchableOpacity>
 
             </View>
           </View>
@@ -186,6 +198,23 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginTop: 2,
   },
+  legalText: {
+    fontSize: 13,
+    fontFamily: 'Quicksand-Regular',
+    color: '#4a3f35',
+    marginTop: 20,
+    textAlign: 'center',
+  },
+  
+  linkText: {
+    fontSize: 13,
+    fontFamily: 'Quicksand-Regular',
+    color: '#3f51b5',
+    textAlign: 'center',
+    marginTop: 8,
+    textDecorationLine: 'underline',
+  },
+  
   bulletText: {
     flex: 1,
     fontFamily: 'Quicksand-Regular',

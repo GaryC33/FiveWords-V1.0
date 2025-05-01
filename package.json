@@ -44,6 +44,7 @@
     "expo-status-bar": "^2.0.1",
     "expo-symbols": "^0.2.2",
     "expo-system-ui": "~4.0.9",
+    "google-ump-react-native": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
     "lucide-react-native": "^0.475.0",
@@ -67,6 +68,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@react-native-community/cli": "^18.0.0",
     "@types/jwt-decode": "^2.2.1",
     "@types/react": "~18.3.12",
     "react-native-svg-transformer": "^1.5.0",
@@ -81,7 +83,9 @@
           "@lucide/lab",
           "mime",
           "openai",
-          "lucide-react-native"
+          "lucide-react-native",
+          "jwt-decode",
+          "react-native-iap"
         ],
         "listUnknownPackages": false
       }
