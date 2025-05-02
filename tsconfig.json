@@ -7,10 +7,6 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react-native",
-    "types": [
-      "react",
-      "react-native"
-    ],
     "baseUrl": ".",
     "paths": {
       "@react-navigation/drawer": [
@@ -25,7 +21,6 @@
     "**/*.ts",
     "**/*.tsx",
     "nativewind-env.d.ts",
-    ".bolt/index.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
   ],

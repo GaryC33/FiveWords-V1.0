@@ -62,16 +62,16 @@ export const morales: string[] = [
 
 // 🎨 Styles enfants groupés par catégories
 export const stylesEnfantsCategories: Record<string, string[]> = {
-  "🖍️ Dessins faits main (comme à l'école)": [
+  "🖍️ Dessins faits main": [
     "crayons de couleur vifs", "gouache épaisse et colorée", "dessin à la craie douce",
     "collage de papiers découpés", "tampons et empreintes", "aquarelle légère et floue",
     "dessin au feutre fin", "peinture à doigts enfantine"
   ],
-  "💻 Dessins faits à l'ordinateur (style moderne)": [
+  "💻 Dessins numérique": [
     "dessin vectoriel coloré", "flat design doux pour enfants", "pastel numérique texturé",
     "pixel art mignon", "dessin 3D simplifié", "illustration avec dégradés doux"
   ],
-  "📚 Inspirations de livres et films": [
+  "📚 Inspirations de dessins annimés": [
     "style album jeunesse", "style 'Petit Prince'", "style Disney classique",
     "style Pixar simplifié", "style Miyazaki doux", "dessin animé vintage",
     "illustration sans contour", "ligne claire et lumineuse"

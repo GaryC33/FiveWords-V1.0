@@ -63,7 +63,11 @@ export default function OffresScreen() {
           {/* 🌙 OFFRE PREMIUM */}
           <View style={[styles.offerCard, styles.cardUniform, styles.featuredCard]}>
             <View style={styles.offerContent}>
-              <Text style={styles.offerTitle}>🌙 Histoires illimitées</Text>
+              <Text style={styles.offerTitle}>✨ Offre Premium ✨</Text>
+              <View style={styles.priceTag}>
+                <Text style={styles.priceText}> 5,00 € / mois </Text>
+              </View>
+              <Text style={styles.autoRenewText}>(Renouvellement automatique)</Text>
               {[
                 'Des histoires en illimitées',
                 'Devenez les héros de vos histoires',
@@ -80,25 +84,14 @@ export default function OffresScreen() {
                 </View>
               ))}
 
-              <View style={styles.priceTag}>
-                <Text style={styles.priceText}>Seulement 5 € / mois</Text>
-              </View>
 
               <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
-                <Text style={styles.ctaButtonText}>✨ Je m’abonne</Text>
+                <Text style={styles.ctaButtonText}>Passez au niveau supérieur🚀</Text>
               </TouchableOpacity>
-              <Text style={styles.legalText}>
-  Offre Premium – 1 mois{'\n'}
-  Prix : 5,00 € / mois – Renouvellement automatique{'\n'}
-</Text>
+{/* Texte "Renouvellement automatique" */}
 
-<TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/privacy.html')}>
-  <Text style={styles.linkText}>Politique de confidentialité</Text>
-</TouchableOpacity>
 
-<TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/terms.html')}>
-  <Text style={styles.linkText}>Conditions d’utilisation (EULA)</Text>
-</TouchableOpacity>
+
 
             </View>
           </View>
@@ -126,6 +119,13 @@ export default function OffresScreen() {
           </View>
 
         </View>
+        <TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/privacy.html')}>
+  <Text style={styles.linkText}>Politique de confidentialité</Text>
+</TouchableOpacity>
+
+<TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/terms.html')}>
+  <Text style={styles.linkText}>Conditions d’utilisation (EULA)</Text>
+</TouchableOpacity>
       </ScrollView>
     </ImageBackground>
   );
@@ -155,6 +155,16 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: MAX_CARD_WIDTH,
   },
+  autoRenewText: {
+    fontFamily: 'Poppins-Regular', // Cohérent avec le prix
+    fontSize: 12, // Plus petit pour la discrétion
+    color: '#666666', // Gris moyen, moins contrasté
+    textAlign: 'center', // Centré comme le prix et le bouton
+    marginTop: 0, // Espacement sous le bouton
+    opacity: 0.9, // Légère transparence pour réduire l’impact visuel
+    alignSelf: 'center',
+    marginBottom: 8,
+  },
   offerCard: {
     width: '100%',
     borderRadius: 20,
@@ -182,8 +192,8 @@ const styles = StyleSheet.create({
   offerTitle: {
     fontSize: 22,
     fontFamily: 'Poppins-Bold',
-    color: '#4a3f35',
-    marginBottom: 16,
+    color: '#1A1A1A',
+    marginBottom: 0,
     textAlign: 'left',
     alignSelf: 'center',
   },
@@ -209,7 +219,7 @@ const styles = StyleSheet.create({
   linkText: {
     fontSize: 13,
     fontFamily: 'Quicksand-Regular',
-    color: '#3f51b5',
+    color: '#000',
     textAlign: 'center',
     marginTop: 8,
     textDecorationLine: 'underline',
@@ -239,22 +249,21 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   priceTag: {
-    backgroundColor: '#e7dbfa',
     borderRadius: 30,
-    paddingVertical: 8,
-    paddingHorizontal: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 5,
     alignSelf: 'center',
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 0,
+    marginBottom: 0,
   },
   priceText: {
     fontFamily: 'Poppins-Bold',
-    fontSize: 16,
-    color: '#4a3f35',
+    fontSize: 20,
+    color: '#1A1A1A',
     textAlign: 'center',
   },
   ctaButton: {
-    backgroundColor: '#c7b6f0',
+    backgroundColor: '#007BFF',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 30,
@@ -268,7 +277,8 @@ const styles = StyleSheet.create({
   },
   ctaButtonText: {
     fontFamily: 'Poppins-Bold',
-    fontSize: 16,
+    fontSize: 20,
+    textAlign: 'center',
     color: '#fff',
   },
 });

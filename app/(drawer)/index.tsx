@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import {  View,  Text,  StyleSheet,  ScrollView,  TouchableOpacity,  ActivityIndicator,  ImageBackground,  Alert,  Image,} from 'react-native';
+import {  View,  Text,  StyleSheet,  ScrollView,  TouchableOpacity,  ActivityIndicator,  ImageBackground,  Alert,  Image, Modal} from 'react-native';
 import { Trash2 } from 'lucide-react-native'; // Assuming icon library
 import { Picker } from '@react-native-picker/picker'; // For dropdown selections
 import { useFocusEffect, router } from 'expo-router'; // Expo's routing and lifecycle hook
@@ -52,6 +52,8 @@ export default function CreateScreen() {
   const randomMorale = pickRandom(Object.values(moraleCategories).flat()); // Randomly selected morale
   const randomStyle = pickRandom(Object.values(stylesEnfantsCategories).flat()); // Randomly selected art style
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
+
   // --- Refs ---
 
   const scrollViewRef = useRef<ScrollView | null>(null); // Ref to the scroll view
@@ -206,7 +208,7 @@ export default function CreateScreen() {
         />
 
         <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent}>
-          {isSubscriber && <View style={{ height: 60, backgroundColor: '#a19cf4' }} />}
+          {isSubscriber && <View style={{ height: 0, backgroundColor: '#a19cf4' }} />}
 
           <ImageBackground source={require('@/assets/backgrounds/dreamy-stars1.png')} style={styles.backgroundimage} resizeMode="cover">
             <Interstitial visible={showInterstitial} onClose={() => { setShowInterstitial(false); triggerStoryGeneration(); }} />
@@ -253,25 +255,13 @@ export default function CreateScreen() {
               }}
             />
 
-            {(isSubscriber || isConnected) && (
-              <View style={styles.PickersRow}>
-                <View style={styles.pickerContainer}>
-                  {!isSubscriber && (<View style={{ ...StyleSheet.absoluteFillObject, zIndex: 10 }} onTouchEnd={() => Alert.alert("Fonction réservée aux abonnés", "Personnalisez votre histoire avec un thème magique.", [{ text: "Voir l'offre", onPress: () => router.push('/offres') }, { text: "Annuler", style: "cancel" }])} />)}
-                  <Picker enabled={isSubscriber} selectedValue={selectedTheme} onValueChange={setSelectedTheme} style={!isSubscriber ? { opacity: 0.5 } : undefined}>
-                    <Picker.Item label="— Thèmes —" value={null} />
-                    {Object.keys(moraleCategories).map((cat, i) => (<Picker.Item key={i} label={cat} value={cat} />))}
-                  </Picker>
-                </View>
 
-                <View style={styles.pickerContainer}>
-                  {!isSubscriber && (<View style={{ ...StyleSheet.absoluteFillObject, zIndex: 10 }} onTouchEnd={() => Alert.alert("Fonction réservée aux abonnés", "Choisissez un style d’illustration magique.", [{ text: "Voir l'offre", onPress: () => router.push('/offres') }, { text: "Annuler", style: "cancel" }])} />)}
-                  <Picker enabled={isSubscriber} selectedValue={selectedStyle} onValueChange={setSelectedStyle} style={!isSubscriber ? { opacity: 0.5 } : undefined}>
-                    <Picker.Item label="— Styles —" value={null} />
-                    {Object.keys(stylesEnfantsCategories).map((cat, i) => (<Picker.Item key={i} label={cat} value={cat} />))}
-                  </Picker>
-                </View>
-              </View>
-            )}
+
+{(isSubscriber || isConnected) && (
+  <TouchableOpacity onPress={() => setShowSelectionModal(true)} style={styles.openModalButton}>
+    <Text style={styles.ctaButtonText}>🎨 Personnaliser l’histoire</Text>
+  </TouchableOpacity>
+)}
 
 <TouchableOpacity
   style={styles.generateButton}
@@ -322,6 +312,7 @@ export default function CreateScreen() {
               </Text>
             </TouchableOpacity>
 
+
             <WordSelector words={words} setWords={setWords} selectedTags={selectedTags} setSelectedTags={setSelectedTags} popularWords={popularWords} setPopularWords={setPopularWords} />
           </ImageBackground>
 
@@ -343,6 +334,53 @@ export default function CreateScreen() {
         />
         
       )}
+<Modal visible={showSelectionModal} animationType="slide" transparent>
+  <View style={styles.modalOverlay}>
+    <View style={styles.modalWrapper}>
+      <ScrollView
+        contentContainerStyle={styles.modalScroll}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Bloc Thème */}
+        <View style={styles.cardBlock}>
+          <Text style={styles.modalTitle}>🎭 Choisir un thème de l'histore</Text>
+          {Object.keys(moraleCategories).map((theme) => (
+            <TouchableOpacity key={theme} style={styles.checkboxRow} onPress={() => setSelectedTheme(theme)}>
+              <Text style={styles.checkboxIcon}>{selectedTheme === theme ? '☑' : '☐'}</Text>
+              <Text style={styles.checkboxLabel}>{theme}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Bloc Style */}
+        <View style={styles.cardBlock}>
+          <Text style={styles.modalTitle}>🖌️ Choisir un style de dessin</Text>
+          {Object.keys(stylesEnfantsCategories).map((style) => (
+            <TouchableOpacity key={style} style={styles.checkboxRow} onPress={() => setSelectedStyle(style)}>
+              <Text style={styles.checkboxIcon}>{selectedStyle === style ? '☑' : '☐'}</Text>
+              <Text style={styles.checkboxLabel}>{style}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+
+      {/* Boutons fixes en bas */}
+      <View style={styles.buttonRow}>
+        <TouchableOpacity style={styles.cancelButton} onPress={() => setShowSelectionModal(false)}>
+          <Text style={styles.cancelText}>Annuler</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.validateButton} onPress={() => setShowSelectionModal(false)}>
+          <Text style={styles.validateText}>Valider</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </View>
+</Modal>
+
+
+
+
+
       <WelcomeModal />
       <ConfirmModal
   visible={confirmModalVisible}
@@ -361,12 +399,12 @@ export default function CreateScreen() {
 const styles = StyleSheet.create({
   scrollContent: { paddingTop: 50, paddingBottom: 0 },
   backgroundimage: { width: '100%' },
-  wordArea: { padding: 60, marginTop: 250 },
+  wordArea: { padding: 60, marginTop: 200 },
   cloudsContainer: { alignItems: 'center', gap: 1 },
   cloudWrapper: { width: 350, marginVertical: -15 },
   cloudLeft: { alignSelf: 'flex-start', marginLeft: 20 },
   cloudRight: { alignSelf: 'flex-end', marginRight: 20 },
-  generateButton: { backgroundColor: '#e7d7eb', borderRadius: 30, paddingVertical: 14, marginTop: 20, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  generateButton: { backgroundColor: '#e7d7eb', borderRadius: 30, paddingVertical: 14, marginTop: 0, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   generateButtonText: { fontFamily: 'Poppins-Bold', textAlign: 'center', fontSize: 18, color: '#000' },
   secondaryButton: { backgroundColor: '#e7d7eb', borderRadius: 20, paddingVertical: 8, paddingHorizontal: 16, borderWidth: 1, borderColor: '#d2c2d9' },
   secondaryButtonText: { fontSize: 14, fontFamily: 'Quicksand-Regular', color: '#333' },
@@ -376,5 +414,139 @@ const styles = StyleSheet.create({
   PickersRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginVertical: 8, paddingHorizontal: 10 },
   iconButton: { width: '30%', backgroundColor: '#e7d7eb', borderRadius: 30, paddingVertical: 10, marginTop: 10, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
   icon: { width: 14, height: 14, marginLeft: 4, },
+    openModalButton: {
+      backgroundColor: 'transparent',
+      padding: 5,
+      borderRadius: 30,
+      alignSelf: 'center',
+      marginTop: -30,
+      marginVertical: 5,
+    },
+    modalWrapper: {
+      backgroundColor: '#fff',
+      borderRadius: 20,
+      width: '90%',
+      maxHeight: '90%',
+      overflow: 'hidden',
+      flex: 0,           // 🔥 force le bon layout
+      alignSelf: 'center'
+    },
+    
+    modalOverlay: {
+      flex: 0,
+      backgroundColor: 'transparent',
+      justifyContent: 'center',
+    },
+    modalScroll: {
+      paddingBottom: 40,
+      paddingHorizontal: 12,
+    },
+    
+    modalContent: {
+      backgroundColor: '#fff',
+      margin: 20,
+      borderRadius: 20,
+      maxHeight: '85%',
+      flexShrink: 1, // 🔥 pour que le scrollview prenne l’espace restant
+      overflow: 'hidden',
+    },
+    
+    buttonRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 16,
+      paddingHorizontal: 10,
+      borderTopWidth: 1,
+      borderColor: '#ddd',
+    },
+    
+    cardBlock: {
+      backgroundColor: '#f0f0f0',
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 20,
+      marginBottom: 0,
+    },
+    
 
-});
+    ctaButtonText: {
+      fontFamily: 'Poppins-bold',
+      fontSize: 16,
+      color: '#333333',
+      textAlign: 'center',
+    },
+    
+    cancelButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      backgroundColor: '#ddd',
+      borderRadius: 8,
+    },
+    
+    cancelText: {
+      color: '#333',
+      fontSize: 16,
+    },
+    
+    validateButton: {
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      backgroundColor: '#c7b6f0',
+      borderRadius: 8,
+    },
+    
+    validateText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    cardGroup: {
+      marginBottom: 20,
+    },
+    card: {
+      padding: 14,
+      backgroundColor: '#f2f2f2',
+      borderRadius: 12,
+      marginVertical: 6,
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    cardLabel: {
+      fontSize: 16,
+    },
+    radio: {
+      fontSize: 18,
+      color: '#4a3f35',
+    },
+    closeModalButton: {
+      alignSelf: 'center',
+      marginTop: 10,
+    },
+    closeText: {
+      fontSize: 16,
+      color: '#4a3f35',
+      textDecorationLine: 'underline',
+    },
+    checkboxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 10,
+    },
+    checkboxIcon: {
+      fontSize: 18,
+      marginRight: 12,
+    },
+    checkboxLabel: {
+      fontSize: 16,
+      color: '#333',
+    },
+    
+  });
+  
