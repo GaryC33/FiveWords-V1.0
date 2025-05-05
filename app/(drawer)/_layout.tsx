@@ -1,3 +1,4 @@
+///app/(drawer)/_layout.tsx
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
 import { useEffect, useState } from 'react';
@@ -6,13 +7,10 @@ import {
   StyleSheet,
   Image,
   View,
-  Platform,
   ImageBackground,
 } from 'react-native';
 import { DrawerToggleButton } from '@react-navigation/drawer';
 import { colors } from '@/constants/colors';
-
-
 
 
 export default function DrawerLayout() {

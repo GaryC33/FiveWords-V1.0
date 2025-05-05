@@ -73,18 +73,34 @@ export default function LoginScreen() {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const { idToken } = await GoogleSignin.getTokens();
-
+  
       if (!idToken) throw new Error('Aucun ID token reçu');
-
-      const { data, error } = await supabase.auth.signInWithIdToken({ provider: 'google', token: idToken });
-
+  
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'google',
+        token: idToken,
+      });
+  
       if (error) {
         console.error('Erreur Supabase:', error.message);
         setError('Échec de la connexion avec Google');
-      } else {
-        console.log('Connexion réussie via Supabase', data);
-        router.replace('/profile/profile');
+        return;
       }
+  
+      console.log('Connexion réussie via Supabase', data);
+  
+      // ✅ Appel de la Edge Function ensure_profile
+      const session = data.session;
+      if (session?.access_token) {
+        await fetch('https://qstvlvkdzrewqqxaesho.supabase.co/functions/v1/ensure_profile', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+      }
+  
+      router.replace('/profile/profile');
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
         console.log('Connexion annulée par l’utilisateur');
@@ -94,6 +110,7 @@ export default function LoginScreen() {
       }
     }
   };
+  
 
   const handleAppleNativeLogin = async () => {
     try {
@@ -103,20 +120,36 @@ export default function LoginScreen() {
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-
+  
       const { identityToken } = credential;
-
+  
       if (!identityToken) throw new Error('Pas de jeton d’identification reçu');
-
-      const { data, error } = await supabase.auth.signInWithIdToken({ provider: 'apple', token: identityToken });
-
+  
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: identityToken,
+      });
+  
       if (error) {
         console.error('Erreur Supabase:', error.message);
         setError('Échec de la connexion avec Apple');
-      } else {
-        console.log('Connexion réussie via Apple', data);
-        router.replace('/profile/profile');
+        return;
       }
+  
+      console.log('Connexion réussie via Apple', data);
+  
+      // ✅ Appel de la Edge Function ensure_profile
+      const session = data.session;
+      if (session?.access_token) {
+        await fetch('https://qstvlvkdzrewqqxaesho.supabase.co/functions/v1/ensure_profile', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+      }
+  
+      router.replace('/profile/profile');
     } catch (error: any) {
       if (error.code === 'ERR_CANCELED') {
         console.log('Connexion annulée par l’utilisateur');
@@ -126,6 +159,7 @@ export default function LoginScreen() {
       }
     }
   };
+  
 
   const handlePasswordReset = async () => {
     if (!email || !email.includes('@')) {

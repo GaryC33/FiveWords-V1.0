@@ -139,6 +139,7 @@ const [inputValue, setInputValue] = useState('');
   
               // Appelle la fonction Supabase sécurisée
               const { error } = await supabase.rpc("delete_user");
+              
   
               if (error) throw error;
   
