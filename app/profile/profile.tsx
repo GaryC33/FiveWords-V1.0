@@ -294,6 +294,21 @@ const [inputValue, setInputValue] = useState('');
     elevation: 0,
   }}
 >
+{/* Nuages + switch */}
+<View
+  style={{
+    backgroundColor: '#e7d7eb',
+    marginHorizontal: 10,
+    padding: 0,
+    borderRadius: 24,
+    marginVertical: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 0,
+  }}
+>
   <View style={styles.switchContainer}>
     <View style={styles.switchRow}>
       <Switch value={becomeHeroes} onValueChange={toggleSwitch} />
@@ -325,6 +340,10 @@ const [inputValue, setInputValue] = useState('');
           );
           setModalVisible(true);
         }}
+        style={[
+          !isSubscriber && { opacity: 0.4 }, // Applique l'opacité si l'utilisateur n'est pas abonné
+        ]}
+ // Empêche l'interaction si l'utilisateur n'est pas abonné (optionnel)
       >
         <ImageBackground
           source={require('@/assets/images/cloud.png')}
@@ -336,6 +355,7 @@ const [inputValue, setInputValue] = useState('');
       </TouchableOpacity>
     ))}
   </View>
+</View>
 </View>
 
     

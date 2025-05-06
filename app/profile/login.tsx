@@ -38,25 +38,11 @@ export default function LoginScreen() {
       if (!email || !password) return setError('Veuillez remplir tous les champs.');
       if (!email.includes('@')) return setError('L’adresse email semble incorrecte.');
 
-      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
       if (signInError) {
         setError(signInError.message === 'Invalid login credentials' ? 'Email ou mot de passe incorrect.' : 'Une erreur est survenue.');
         return;
-      }
-
-      if (user) {
-        const { error: insertError } = await supabase
-          .from('profiles')
-          .insert([{ user_id: user.id, avatar_url: '6.png', first_names: [], children_names: [], current_period_end: null, mail_log: user.email }])
-          .select()
-          .single();
-
-        if (insertError && !insertError.message.includes('duplicate key')) {
-          console.error('Erreur création profil :', insertError);
-          Alert.alert("Erreur", "Impossible de créer le profil utilisateur.");
-          return;
-        }
       }
 
       router.replace('/profile/profile');
@@ -73,33 +59,20 @@ export default function LoginScreen() {
       await GoogleSignin.hasPlayServices();
       const userInfo = await GoogleSignin.signIn();
       const { idToken } = await GoogleSignin.getTokens();
-  
+
       if (!idToken) throw new Error('Aucun ID token reçu');
-  
-      const { data, error } = await supabase.auth.signInWithIdToken({
+
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: 'google',
         token: idToken,
       });
-  
+
       if (error) {
         console.error('Erreur Supabase:', error.message);
         setError('Échec de la connexion avec Google');
         return;
       }
-  
-      console.log('Connexion réussie via Supabase', data);
-  
-      // ✅ Appel de la Edge Function ensure_profile
-      const session = data.session;
-      if (session?.access_token) {
-        await fetch('https://qstvlvkdzrewqqxaesho.supabase.co/functions/v1/ensure_profile', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-      }
-  
+
       router.replace('/profile/profile');
     } catch (error: any) {
       if (error.code === statusCodes.SIGN_IN_CANCELLED) {
@@ -110,7 +83,6 @@ export default function LoginScreen() {
       }
     }
   };
-  
 
   const handleAppleNativeLogin = async () => {
     try {
@@ -120,35 +92,22 @@ export default function LoginScreen() {
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-  
+
       const { identityToken } = credential;
-  
+
       if (!identityToken) throw new Error('Pas de jeton d’identification reçu');
-  
-      const { data, error } = await supabase.auth.signInWithIdToken({
+
+      const { error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: identityToken,
       });
-  
+
       if (error) {
         console.error('Erreur Supabase:', error.message);
         setError('Échec de la connexion avec Apple');
         return;
       }
-  
-      console.log('Connexion réussie via Apple', data);
-  
-      // ✅ Appel de la Edge Function ensure_profile
-      const session = data.session;
-      if (session?.access_token) {
-        await fetch('https://qstvlvkdzrewqqxaesho.supabase.co/functions/v1/ensure_profile', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-      }
-  
+
       router.replace('/profile/profile');
     } catch (error: any) {
       if (error.code === 'ERR_CANCELED') {
@@ -159,25 +118,23 @@ export default function LoginScreen() {
       }
     }
   };
-  
 
   const handlePasswordReset = async () => {
     if (!email || !email.includes('@')) {
       return Alert.alert('Adresse invalide', 'Veuillez entrer une adresse e-mail valide.');
     }
-
+  
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${makeRedirectUri()}profile/reset-password`,
-      });
-
+      const { error } = await supabase.auth.resetPasswordForEmail(email); // pas de redirectTo nécessaire
+  
       if (error) throw error;
-      Alert.alert('Email envoyé', 'Un lien de réinitialisation vous a été envoyé par e-mail.');
+  
+      Alert.alert('Lien envoyé', 'Vérifie ta boîte mail pour réinitialiser ton mot de passe.');
     } catch (err) {
       Alert.alert('Erreur', "Impossible d'envoyer l’e-mail de réinitialisation.");
     }
   };
-
+  
   return (
     <ImageBackground source={require('@/assets/backgrounds/dreamy-stars1.png')} resizeMode="cover" style={styles.background}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -293,7 +250,6 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 5,
   },
-  
   content: {
     flex: 1,
     padding: 20,

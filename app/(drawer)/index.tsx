@@ -1,7 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {  View,  Text,  StyleSheet,  ScrollView,  TouchableOpacity,  ActivityIndicator,  ImageBackground,  Alert,  Image, Modal} from 'react-native';
 import { Trash2 } from 'lucide-react-native'; // Assuming icon library
-import { Picker } from '@react-native-picker/picker'; // For dropdown selections
 import { useFocusEffect, router } from 'expo-router'; // Expo's routing and lifecycle hook
 
 import AnimatedWordBubble from '@/components/AnimatedWordBubble';
@@ -258,7 +257,28 @@ export default function CreateScreen() {
 
 
 {(isSubscriber || isConnected) && (
-  <TouchableOpacity onPress={() => setShowSelectionModal(true)} style={styles.openModalButton}>
+  <TouchableOpacity
+    onPress={() => {
+      if (isSubscriber) {
+        setShowSelectionModal(true);
+      } else {
+        Alert.alert(
+          'Abonnement requis', 'Cette fonctionnalité est réservée aux abonnés.',
+          [
+            {
+              text: 'Annuler',
+              style: 'cancel',
+            },
+            {
+              text: 'Voir les offres',
+              onPress: () => router.push('/offres'),
+            },
+          ]
+        );
+      }
+    }}
+    style={styles.openModalButton}
+  >
     <Text style={styles.ctaButtonText}>🎨 Personnaliser l’histoire</Text>
   </TouchableOpacity>
 )}
@@ -284,7 +304,7 @@ export default function CreateScreen() {
 
       {isLoggedIn && !isSubscriber && (
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-          <Text style={styles.generateButtonText}></Text>
+          <Text style={styles.secondaryButtonText}>retire une plumette </Text>
           <Image
             source={require('@/assets/icons/plumette.png')}
             style={styles.icon}

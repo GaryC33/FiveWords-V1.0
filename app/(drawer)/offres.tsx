@@ -8,10 +8,13 @@ import {
   ImageBackground,
   Image,
   Alert,
+  Linking,
 } from 'react-native';
+
 import { useRouter } from 'expo-router';
+
 import { getProfile } from '@/services/supabase';
-import { requestSubscription, initIAP } from '@/services/iap'; // 🔥 Import IAP direct ici
+import { requestSubscription, initIAP } from '@/services/iap';
 
 const MAX_CARD_WIDTH = 425;
 
@@ -30,24 +33,32 @@ export default function OffresScreen() {
 
   useEffect(() => {
     const fetchProfile = async () => {
-      const result = await getProfile();
-      setProfile(result);
+      try {
+        const result = await getProfile();
+        setProfile(result);
+      } catch (error) {
+        console.warn('⚠️ Erreur lors du chargement du profil', error);
+      }
     };
+
     fetchProfile();
-    initIAP(); // 🔥 Initialisation IAP au montage
+    initIAP();
   }, []);
 
   const handleSubscribe = async () => {
     if (!profile?.user_id) {
-      Alert.alert("Connexion requise", "Identifiez-vous pour vous abonner.");
+      Alert.alert(
+        "Connexion requise",
+        "Identifiez-vous pour débloquer l'aventure complète !"
+      );
       return;
     }
 
     try {
-      await requestSubscription(); // 🔥 Lance directement l'achat
+      await requestSubscription();
     } catch (err) {
       console.error('❌ Erreur lors de l’abonnement:', err);
-      Alert.alert('Erreur', 'Impossible de traiter votre abonnement.');
+      Alert.alert('Erreur', "L'abonnement n'a pas pu être activé.");
     }
   };
 
@@ -59,15 +70,17 @@ export default function OffresScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.offerList}>
-
           {/* 🌙 OFFRE PREMIUM */}
           <View style={[styles.offerCard, styles.cardUniform, styles.featuredCard]}>
             <View style={styles.offerContent}>
               <Text style={styles.offerTitle}>✨ Offre Premium ✨</Text>
+
               <View style={styles.priceTag}>
                 <Text style={styles.priceText}> 5,00 € / mois </Text>
               </View>
+
               <Text style={styles.autoRenewText}>(Renouvellement automatique)</Text>
+
               {[
                 'Des histoires en illimitées',
                 'Devenez les héros de vos histoires',
@@ -84,15 +97,9 @@ export default function OffresScreen() {
                 </View>
               ))}
 
-
               <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
                 <Text style={styles.ctaButtonText}>Passez au niveau supérieur🚀</Text>
               </TouchableOpacity>
-{/* Texte "Renouvellement automatique" */}
-
-
-
-
             </View>
           </View>
 
@@ -100,6 +107,7 @@ export default function OffresScreen() {
           <View style={[styles.offerCard, styles.cardUniform]}>
             <View style={styles.offerContent}>
               <Text style={styles.offerTitle}>🕊️ Offre 100% gratuite</Text>
+
               {[
                 '5 histoires offertes à l’inscription',
                 '1 plume renouvelée tous les jours',
@@ -110,30 +118,31 @@ export default function OffresScreen() {
               ].map((text, index) => (
                 <View style={styles.bulletRow} key={index}>
                   <Image source={require('@/assets/icons/plumette.png')} style={styles.bulletIcon} />
-                  <Text style={[styles.bulletText, text.includes('Historique illimité') && styles.strikethrough]}>
+                  <Text
+                    style={[
+                      styles.bulletText,
+                      text.includes('Historique illimité') && styles.strikethrough,
+                    ]}
+                  >
                     {text}
                   </Text>
                 </View>
               ))}
             </View>
           </View>
-
         </View>
-        <TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/privacy.html')}>
-  <Text style={styles.linkText}>Politique de confidentialité</Text>
-</TouchableOpacity>
 
-<TouchableOpacity onPress={() => router.push('https://cinq-mots-pour-dodo.store/terms.html')}>
-  <Text style={styles.linkText}>Conditions d’utilisation (EULA)</Text>
-</TouchableOpacity>
+        <TouchableOpacity onPress={() => Linking.openURL('https://cinq-mots-pour-dodo.store/privacy.html')}>
+          <Text style={styles.linkText}>Politique de confidentialité</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => Linking.openURL('https://cinq-mots-pour-dodo.store/terms.html')}>
+          <Text style={styles.linkText}>Conditions d’utilisation (EULA)</Text>
+        </TouchableOpacity>
       </ScrollView>
     </ImageBackground>
   );
 }
-
-// Ton style `StyleSheet.create({...})` reste inchangé ici
-
-
 const styles = StyleSheet.create({
   background: {
     flex: 1,
@@ -143,7 +152,6 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
-  
   scrollContent: {
     alignItems: 'center',
     paddingBottom: 60,
@@ -156,12 +164,12 @@ const styles = StyleSheet.create({
     maxWidth: MAX_CARD_WIDTH,
   },
   autoRenewText: {
-    fontFamily: 'Poppins-Regular', // Cohérent avec le prix
-    fontSize: 12, // Plus petit pour la discrétion
-    color: '#666666', // Gris moyen, moins contrasté
-    textAlign: 'center', // Centré comme le prix et le bouton
-    marginTop: 0, // Espacement sous le bouton
-    opacity: 0.9, // Légère transparence pour réduire l’impact visuel
+    fontFamily: 'Poppins-Regular',
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'center',
+    marginTop: 0,
+    opacity: 0.9,
     alignSelf: 'center',
     marginBottom: 8,
   },
@@ -208,14 +216,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginTop: 2,
   },
-  legalText: {
-    fontSize: 13,
-    fontFamily: 'Quicksand-Regular',
-    color: '#4a3f35',
-    marginTop: 20,
-    textAlign: 'center',
-  },
-  
   linkText: {
     fontSize: 13,
     fontFamily: 'Quicksand-Regular',
@@ -224,7 +224,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textDecorationLine: 'underline',
   },
-  
   bulletText: {
     flex: 1,
     fontFamily: 'Quicksand-Regular',
@@ -232,21 +231,6 @@ const styles = StyleSheet.create({
     color: '#4a3f35',
     lineHeight: 22,
     textAlign: 'left',
-  },
-  offerText: {
-    fontSize: 15,
-    fontFamily: 'Quicksand-Regular',
-    color: '#4a3f35',
-    textAlign: 'left',
-  },
-  italic_d: {
-    fontStyle: 'italic',
-    textAlign: 'right',
-    marginTop: 8,
-    color: '#5f5f5f',
-    fontSize: 15,
-    alignSelf: 'flex-end',
-    width: '100%',
   },
   priceTag: {
     borderRadius: 30,

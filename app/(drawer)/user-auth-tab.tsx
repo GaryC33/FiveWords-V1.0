@@ -1,3 +1,4 @@
+//app/(drawer)/user-auth-tab.tsx
 import { useEffect } from 'react';
 import { router } from 'expo-router';
 import { supabase } from '@/services/supabase';

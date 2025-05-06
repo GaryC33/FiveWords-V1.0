@@ -8,6 +8,7 @@ import {
   ScrollView,
   ImageBackground,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Mail, Lock, WrapText } from 'lucide-react-native';
@@ -22,9 +23,7 @@ export default function SignupScreen() {
   const [info, setInfo] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleBack = () => {
-    router.back();
-  };
+  const handleBack = () => router.back();
 
   const handleSignup = async () => {
     try {
@@ -52,13 +51,11 @@ export default function SignupScreen() {
         return;
       }
 
-      // 🔐 Hash email avant vérification
       const emailHash = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         email.trim().toLowerCase()
       );
 
-      // 🔍 Vérifie si ce hash existe dans deleted_users
       const { data: existing, error: checkError } = await supabase
         .from('deleted_users')
         .select('email_hash')
@@ -71,16 +68,18 @@ export default function SignupScreen() {
         return;
       }
 
-      // ✅ Inscription via Supabase Auth
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
+      const { error: signUpError } = await supabase.auth.signUp({ email, password });
 
-      if (signUpError) throw signUpError;
+      if (signUpError) {
+        if (signUpError.message.includes('user already registered')) {
+          setError('Cet e-mail est déjà utilisé.');
+        } else {
+          setError(signUpError.message);
+        }
+        return;
+      }
 
-      setInfo("Un e-mail de confirmation vous a été envoyé. Veuillez vérifier votre boîte de réception.");
-
+      setInfo("Un e-mail de confirmation vous a été envoyé. Vérifiez votre boîte de réception.");
     } catch (err: any) {
       console.error('Signup error:', err);
       setError(err?.message || "Une erreur est survenue lors de l'inscription.");
@@ -103,8 +102,9 @@ export default function SignupScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Créer un compte</Text>
           <Text style={styles.subtitle}>
-            Bienvenue dans la communauté des créateurs de magie{'\n'}et de contes du soir
+            Bienvenue dans la communauté des créateurs de magie
           </Text>
+          <Text style={styles.subtitle}>et de contes du soir</Text>
         </View>
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -159,9 +159,11 @@ export default function SignupScreen() {
             onPress={handleSignup}
             disabled={loading}
           >
-            <Text style={styles.signupButtonText}>
-              {loading ? 'Inscription...' : 'S’inscrire'}
-            </Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.signupButtonText}>S’inscrire</Text>
+            )}
           </TouchableOpacity>
 
           <View style={styles.loginContainer}>
@@ -181,19 +183,79 @@ const styles = StyleSheet.create({
   scrollContent: { padding: 20, paddingTop: 60, paddingBottom: 40 },
   backButton: { marginBottom: 24 },
   header: { alignItems: 'center', marginBottom: 32 },
-  title: { fontFamily: 'Poppins-Bold', fontSize: 32, color: '#6b5b51', marginBottom: 8, textAlign: 'center' },
-  subtitle: { fontFamily: 'Quicksand-Regular', fontSize: 18, color: '#6b5b51cc', textAlign: 'center', lineHeight: 24 },
-  error: { fontFamily: 'Quicksand-Regular', color: '#d96d55', marginBottom: 16, textAlign: 'center' },
-  info: { fontFamily: 'Quicksand-Regular', color: '#ffffff', marginBottom: 16, textAlign: 'center' },
-  form: { width: '100%', maxWidth: 400, alignSelf: 'center' },
+  title: {
+    fontFamily: 'Poppins-Bold',
+    fontSize: 32,
+    color: '#6b5b51',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontFamily: 'Quicksand-Regular',
+    fontSize: 18,
+    color: '#6b5b51cc',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  error: {
+    fontFamily: 'Quicksand-Regular',
+    color: '#d96d55',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  info: {
+    fontFamily: 'Quicksand-Regular',
+    color: '#ffffff',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  form: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+  },
   inputContainer: { gap: 16, marginBottom: 24 },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255, 255, 255, 0.6)', borderRadius: 15, paddingHorizontal: 16 },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
+    borderRadius: 15,
+    paddingHorizontal: 16,
+  },
   inputIcon: { marginRight: 12 },
-  input: { flex: 1, fontFamily: 'Quicksand-Regular', color: '#6b5b51', fontSize: 16, paddingVertical: 16 },
-  signupButton: { backgroundColor: '#ac9fb1', paddingVertical: 16, borderRadius: 20, alignItems: 'center', marginBottom: 24 },
+  input: {
+    flex: 1,
+    fontFamily: 'Quicksand-Regular',
+    color: '#6b5b51',
+    fontSize: 16,
+    paddingVertical: 16,
+  },
+  signupButton: {
+    backgroundColor: '#ac9fb1',
+    paddingVertical: 16,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginBottom: 24,
+  },
   signupButtonDisabled: { opacity: 0.7 },
-  signupButtonText: { fontFamily: 'Poppins-Bold', color: '#fff', fontSize: 18 },
-  loginContainer: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  loginText: { fontFamily: 'Quicksand-Regular', color: '#6b5b51cc', fontSize: 16 },
-  loginLink: { fontFamily: 'Poppins-Bold', color: '#6b5b51', fontSize: 16 },
+  signupButtonText: {
+    fontFamily: 'Poppins-Bold',
+    color: '#fff',
+    fontSize: 18,
+  },
+  loginContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  loginText: {
+    fontFamily: 'Quicksand-Regular',
+    color: '#6b5b51cc',
+    fontSize: 16,
+  },
+  loginLink: {
+    fontFamily: 'Poppins-Bold',
+    color: '#6b5b51',
+    fontSize: 16,
+  },
 });

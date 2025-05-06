@@ -1,3 +1,4 @@
+//app/(drawer)/history.tsx
 import { useEffect, useState } from 'react';
 import {
   View,
@@ -6,36 +7,44 @@ import {
   ScrollView,
   TouchableOpacity,
   ImageBackground,
-  Platform,
   Alert,
 } from 'react-native';
+
 import { Sparkles } from 'lucide-react-native';
 import { StoryCardFull } from '@/components/StoryCardFull';
-import  EmptyStateIllustration  from '@/components/EmptyStateIllustration';
+import EmptyStateIllustration from '@/components/EmptyStateIllustration';
 import { SavedStory, getLocalHistory } from '@/hooks/historiesTools';
 import { useProfileTools } from '@/hooks/profilesTools';
 import { router } from 'expo-router';
+
 import Interstitial from '@/app/admob/Interstitial';
 import Banner from '@/app/admob/Banner';
+
 export default function HistoryScreen() {
+  // Histoires récupérées en local
   const [stories, setStories] = useState<SavedStory[]>([]);
+
+  // Contrôle de la pub interstitielle
   const [showInterstitial, setShowInterstitial] = useState(false);
+
+  // Stocke temporairement l’ID de l’histoire sélectionnée
   const [pendingStoryId, setPendingStoryId] = useState<string | null>(null);
 
+  // Statut du profil
   const { status } = useProfileTools();
   const isSubscriber = status === 'subscriber';
   const isConnected = status === 'connected';
 
+  // Chargement initial des histoires locales
   useEffect(() => {
+    const loadLocalStories = async () => {
+      const local = await getLocalHistory();
+      setStories(local);
+    };
     loadLocalStories();
   }, []);
 
-  const loadLocalStories = async () => {
-    const local = await getLocalHistory();
-    setStories(local);
-  };
-
-  // ✅ déclenche navigation APRES la pub interstitielle
+  // Une fois la pub fermée, on navigue vers l’histoire demandée
   useEffect(() => {
     if (!showInterstitial && pendingStoryId) {
       router.push(`/story/${pendingStoryId}`);
@@ -43,95 +52,112 @@ export default function HistoryScreen() {
     }
   }, [showInterstitial, pendingStoryId]);
 
+  // Gestion du clic sur une histoire
   const handleStoryPress = (id: string, isLast: boolean) => {
     if (isSubscriber) {
+      // Accès libre
       router.push(`/story/${id}`);
     } else if (isConnected && isLast) {
+      // Dernière histoire accessible aux non-abonnés
       setPendingStoryId(id);
       setShowInterstitial(true);
     } else {
+      // Verrouillé → incitation à l’abonnement
       Alert.alert(
-        "Abonnement requis",
-        "Les abonnés ont accès à toutes les histoires.",
+        'Abonnement requis',
+        'Pour explorer toutes vos histoires magiques, devenez explorateur abonné !',
         [
-          { text: "Voir les offres", onPress: () => router.push('/offres') },
-          { text: "Annuler", style: "cancel" },
+          { text: 'Voir les offres', onPress: () => router.push('/offres') },
+          { text: 'Annuler', style: 'cancel' },
         ]
       );
     }
   };
 
   return (
-        <>
-<Banner isSubscriber={status === 'subscriber'} position="top" />
+    <>
+      {/* Publicité bannière (top) */}
+      <Banner isSubscriber={isSubscriber} position="top" />
 
-    <ImageBackground
-      source={require('@/assets/backgrounds/dreamy-stars1.png')}
-      resizeMode="cover"
-      style={styles.background}
-    >
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Mes histoires</Text>
-          <TouchableOpacity style={styles.createButton} onPress={() => router.push('/')}>
-            <Sparkles size={20} color="#fff" />
-            <Text style={styles.createButtonText}>Lancer une nouvelle histoire</Text>
-          </TouchableOpacity>
-        </View>
-
-        {stories.length === 0 ? (
-          <View style={styles.emptyState}>
-            <EmptyStateIllustration />
-            <Text style={styles.emptyStateText}>
-              Vous n'avez pas encore créé d'histoire magique...
-            </Text>
-            <Text style={styles.emptyStateSubtext}>
-            5 mots suffisent pour faire naître une histoire…
-            </Text>
+      <ImageBackground
+        source={require('@/assets/backgrounds/dreamy-stars1.png')}
+        resizeMode="cover"
+        style={styles.background}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* En-tête de page */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Mes histoires</Text>
+            <TouchableOpacity
+              style={styles.createButton}
+              onPress={() => router.push('/')}
+            >
+              <Sparkles size={20} color="#fff" />
+              <Text style={styles.createButtonText}>Lancer une nouvelle histoire</Text>
+            </TouchableOpacity>
           </View>
-        ) : (
-          <View style={styles.storiesList}>
-            {stories.map((story, index) => {
-              const locked = !isSubscriber && !(isConnected && story.isLastGenerated);
 
-              return (
-                <TouchableOpacity
-                  key={story.id}
-                  activeOpacity={0.9}
-                  onPress={() => handleStoryPress(story.id, story.isLastGenerated === true)}
-                >
-                  <View style={locked ? styles.grayscale : undefined}>
-                    <StoryCardFull
-                      id={story.id}
-                      title={story.title}
-                      date={story.date}
-                      imageUrl={story.imageUrl}
-                      content={story.content}
-                      words={story.words ?? []}
-                      variant="compact"
-                      locked={locked}
-                      isLastGenerated={story.isLastGenerated === true}
-                    />
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
+          {/* Aucune histoire : état vide */}
+          {stories.length === 0 ? (
+            <View style={styles.emptyState}>
+              <EmptyStateIllustration />
+              <Text style={styles.emptyStateText}>
+                Vous n'avez pas encore créé d'histoire magique...
+              </Text>
+              <Text style={styles.emptyStateSubtext}>
+                5 mots suffisent pour faire naître une histoire…
+              </Text>
+            </View>
+          ) : (
+            // Liste des histoires
+            <View style={styles.storiesList}>
+              {stories.map((story) => {
+                const locked =
+                  !isSubscriber && !(isConnected && story.isLastGenerated);
 
-        {/* ✅ Popup pub  */}
-        <Interstitial
-          visible={showInterstitial}
-          onClose={() => setShowInterstitial(false)}
-        />
-      </ScrollView>
-    </ImageBackground>
-    <Banner isSubscriber={status === 'subscriber'} position="bottom" />
+                return (
+                  <TouchableOpacity
+                    key={story.id}
+                    activeOpacity={0.9}
+                    onPress={() =>
+                      handleStoryPress(story.id, story.isLastGenerated === true)
+                    }
+                  >
+                    <View style={locked ? styles.grayscale : undefined}>
+                      <StoryCardFull
+                        id={story.id}
+                        title={story.title}
+                        date={story.date}
+                        imageUrl={story.imageUrl}
+                        content={story.content}
+                        words={story.words ?? []}
+                        variant="compact"
+                        locked={locked}
+                        isLastGenerated={story.isLastGenerated === true}
+                      />
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          )}
 
-          </>
+          {/* Popup de publicité interstitielle (non-abonné) */}
+          <Interstitial
+            visible={showInterstitial}
+            onClose={() => setShowInterstitial(false)}
+          />
+        </ScrollView>
+      </ImageBackground>
+
+      {/* Publicité bannière (bottom) */}
+      <Banner isSubscriber={isSubscriber} position="bottom" />
+    </>
   );
 }
-
 
 const styles = StyleSheet.create({
   background: {
@@ -139,7 +165,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#e9e1d6',
   },
   grayscale: {
-    opacity: 0.4,
+    opacity: 0.4, // Effet visuel pour signaler le verrouillage
   },
   scrollContent: {
     paddingTop: 60,
