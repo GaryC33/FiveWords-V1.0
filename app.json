@@ -18,7 +18,8 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.cinqmotspourdo.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSUserTrackingUsageDescription": "Cette autorisation nous permet de vous proposer des publicités plus pertinentes."
       },
       "usesAppleSignIn": true
     },
@@ -55,6 +56,12 @@
             "parentTheme": "Light",
             "enforceNavigationBarContrast": false
           }
+        }
+      ],
+      [
+        "expo-tracking-transparency",
+        {
+          "userTrackingPermission": "Cette autorisation nous permet de vous proposer des publicités plus pertinentes."
         }
       ],
       "react-native-iap",

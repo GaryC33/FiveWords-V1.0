@@ -26,6 +26,7 @@ import Banner from '@/app/admob/Banner';
 import { usePlumetteTimer } from '@/hooks/plumettesTimer';
 import PlumetteBadge from '@/components/PlumetteBadge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { restorePurchases } from '@/services/iap'
 
 const AVATAR_OPTIONS = [
   { filename: '1.png', source: require('@/assets/avatars/1.png') },
@@ -384,7 +385,14 @@ const [inputValue, setInputValue] = useState('');
                 Charger mon historique
               </Text>
             </TouchableOpacity>
-    
+            <TouchableOpacity
+  style={[styles.button, styles.editButton]}
+  onPress={restorePurchases}
+>
+  <Text style={[styles.buttonText, styles.editButtonText]}>
+    Restaurer mes achats
+  </Text>
+</TouchableOpacity>
             {/* Boutons de fin */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity

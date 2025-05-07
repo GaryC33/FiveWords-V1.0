@@ -10,6 +10,9 @@ import PlumetteBadge from '@/components/PlumetteBadge';
 import WelcomeModal from '@/components/WelcomeModal';
 import ConfirmModal from '@/components/ConfirmModal';
 
+import { Platform } from 'react-native';
+import { requestTrackingPermissionsAsync, getTrackingPermissionsAsync } from 'expo-tracking-transparency';
+
 import Banner from '@/app/admob/Banner'; // Ad banner component
 import Rewarded from '@/app/admob/Rewarded'; // Rewarded ad component
 import Interstitial from '@/app/admob/Interstitial'; // Interstitial ad component
@@ -61,11 +64,26 @@ export default function CreateScreen() {
   // --- Effects ---
 
   // Load "becomeHeroes" setting from local storage
+// Load "becomeHeroes" setting from local storage
+
   useEffect(() => {
+    const requestTracking = async () => {
+      if (Platform.OS === 'ios') {
+        const { status } = await getTrackingPermissionsAsync();
+        if (status === 'undetermined') {
+          await requestTrackingPermissionsAsync();
+        }
+      }
+    };
+  
     AsyncStorage.getItem('becomeHeroes').then(value => {
       setBecomeHeroes(value === 'true');
     });
+  
+    requestTracking();
   }, []);
+
+
 
   // Reload user profile when the screen gains focus
   useFocusEffect(useCallback(() => { reloadProfile(); }, [reloadProfile]));

@@ -1,19 +1,20 @@
+// iap.ts
 import * as RNIap from 'react-native-iap';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import { useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 import { useProfileTools } from '@/hooks/profilesTools';
 
 // ─────────────────────────────────────────────────────────────
-// SKU de l'abonnement (à personnaliser selon ton store)
+// SKU de l'abonnement
 // ─────────────────────────────────────────────────────────────
 const itemSkus = Platform.select({
-  ios: ['6745134783'],            // ID App Store Connect
-  android: ['cinq_dodo_monthly'], // ID Google Play Console
+  ios: ['premium1'],
+  android: ['cinq_dodo_monthly'],
 });
 
 // ─────────────────────────────────────────────────────────────
-// Connexion IAP
+// Initialisation de la connexion IAP
 // ─────────────────────────────────────────────────────────────
 export async function initIAP(): Promise<void> {
   try {
@@ -27,7 +28,7 @@ export async function initIAP(): Promise<void> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Récupérer les offres d’abonnement
+// Récupération des offres d’abonnement
 // ─────────────────────────────────────────────────────────────
 export async function getSubscriptions() {
   try {
@@ -41,16 +42,18 @@ export async function getSubscriptions() {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Demander l’achat d’un abonnement
+// Demande d’achat d’un abonnement
 // ─────────────────────────────────────────────────────────────
 export async function requestSubscription(): Promise<void> {
   try {
     if (!itemSkus || itemSkus.length === 0) throw new Error('SKU non défini');
 
-    const subs = await RNIap.getSubscriptions({ skus: itemSkus });
-    console.log('📦 Abonnements disponibles :', subs);
+    const subs = await getSubscriptions();
+    if (!subs || subs.length === 0) throw new Error('Aucun abonnement disponible.');
+    const offerDetails = subs[0].subscriptionOfferDetails;
+    if (!offerDetails || offerDetails.length === 0) throw new Error("Aucune offre d'abonnement disponible pour ce produit.");
 
-    const offerToken = subs?.[0]?.subscriptionOfferDetails?.[0]?.offerToken;
+    const offerToken = offerDetails[0].offerToken;
     if (!offerToken) throw new Error('Aucune offre disponible');
 
     await RNIap.requestSubscription({
@@ -66,12 +69,13 @@ export async function requestSubscription(): Promise<void> {
     console.log('✅ Demande d’abonnement envoyée');
   } catch (err) {
     console.error('❌ requestSubscription error:', err);
+    Alert.alert('Erreur', (err as Error).message);
     throw err;
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// Vérifier les achats existants (ex: au login)
+// Restauration des achats existants
 // ─────────────────────────────────────────────────────────────
 export async function getAvailablePurchases() {
   try {
@@ -84,8 +88,17 @@ export async function getAvailablePurchases() {
   }
 }
 
+export async function restorePurchases() {
+  const restored = await getAvailablePurchases();
+  if (restored.length > 0) {
+    Alert.alert('Succès', 'Vos achats ont été restaurés.');
+  } else {
+    Alert.alert('Info', 'Aucun achat à restaurer.');
+  }
+}
+
 // ─────────────────────────────────────────────────────────────
-// Vérifie si l’utilisateur est abonné localement (mobile)
+// Vérification locale d’un abonnement actif
 // ─────────────────────────────────────────────────────────────
 export async function isSubscribed(): Promise<boolean> {
   try {
@@ -111,7 +124,7 @@ export async function isSubscribed(): Promise<boolean> {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Écoute les achats terminés et les enregistre dans Supabase
+// Écoute des achats terminés
 // ─────────────────────────────────────────────────────────────
 export function usePurchaseListener() {
   const { profile } = useProfileTools();
@@ -136,7 +149,7 @@ export function usePurchaseListener() {
           user_id: profile.user_id,
           google_purchase_token: token,
           google_subscription_id: productId,
-          platform: 'google',
+          platform: Platform.OS,
           status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -145,7 +158,7 @@ export function usePurchaseListener() {
         if (error) {
           console.error('❌ Supabase insert error:', error);
         } else {
-          console.log('✅ Abonnement Google enregistré dans Supabase');
+          console.log('✅ Abonnement enregistré dans Supabase');
         }
       } catch (err) {
         console.error('❌ purchase listener error:', err);
@@ -153,7 +166,7 @@ export function usePurchaseListener() {
     });
 
     return () => {
-      if (listener) listener.remove();
+      listener?.remove();
     };
   }, [profile?.user_id]);
 }
