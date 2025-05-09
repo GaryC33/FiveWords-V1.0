@@ -44,27 +44,45 @@ export async function getSubscriptions() {
 // ─────────────────────────────────────────────────────────────
 // Demande d’achat d’un abonnement
 // ─────────────────────────────────────────────────────────────
+
 export async function requestSubscription(): Promise<void> {
   try {
     if (!itemSkus || itemSkus.length === 0) throw new Error('SKU non défini');
 
     const subs = await getSubscriptions();
     if (!subs || subs.length === 0) throw new Error('Aucun abonnement disponible.');
-    const offerDetails = subs[0].subscriptionOfferDetails;
-    if (!offerDetails || offerDetails.length === 0) throw new Error("Aucune offre d'abonnement disponible pour ce produit.");
 
-    const offerToken = offerDetails[0].offerToken;
-    if (!offerToken) throw new Error('Aucune offre disponible');
+    const selectedSub = subs[0];
 
-    await RNIap.requestSubscription({
-      sku: itemSkus[0],
-      subscriptionOffers: [
-        {
-          sku: itemSkus[0],
-          offerToken,
-        },
-      ],
-    });
+    if (Platform.OS === 'android') {
+      const androidSub = selectedSub as typeof selectedSub & {
+        subscriptionOfferDetails?: {
+          offerToken: string;
+        }[];
+      };
+
+      const offerDetails = androidSub.subscriptionOfferDetails;
+      if (!offerDetails || offerDetails.length === 0) {
+        throw new Error("Aucune offre d'abonnement disponible pour ce produit.");
+      }
+
+      const offerToken = offerDetails[0].offerToken;
+      if (!offerToken) throw new Error('Aucune offre disponible');
+
+      await RNIap.requestSubscription({
+        sku: itemSkus[0],
+        subscriptionOffers: [
+          {
+            sku: itemSkus[0],
+            offerToken,
+          },
+        ],
+      });
+    } else {
+      await RNIap.requestSubscription({
+        sku: itemSkus[0],
+      });
+    }
 
     console.log('✅ Demande d’abonnement envoyée');
   } catch (err) {
