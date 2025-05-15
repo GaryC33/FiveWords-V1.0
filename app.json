@@ -29,7 +29,11 @@
         "backgroundColor": "#2A2F4F"
       },
       "package": "com.cinqmotspourdo.app",
-      "versionCode": 11
+      "versionCode": 11,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -40,7 +44,17 @@
       "expo-router",
       "expo-tracking-transparency",
       "react-native-iap",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
