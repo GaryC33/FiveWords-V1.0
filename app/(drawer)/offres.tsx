@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 
 import { useRouter } from 'expo-router';
-
+import { restorePurchases } from '@/services/iap'
 import { getProfile } from '@/services/supabase';
 import { requestSubscription, initIAP } from '@/services/iap';
 
@@ -100,6 +100,19 @@ export default function OffresScreen() {
               <TouchableOpacity style={styles.ctaButton} onPress={handleSubscribe}>
                 <Text style={styles.ctaButtonText}>Passez au niveau supérieur🚀</Text>
               </TouchableOpacity>
+                          <TouchableOpacity
+  style={styles.restoreButton}
+  onPress={async () => {
+    try {
+      await restorePurchases();
+    } catch (err) {
+      Alert.alert("Erreur", "Impossible de restaurer les achats.");
+    }
+  }}
+>
+  <Text style={styles.restoreButtonText}>Restaurer mes achats</Text>
+</TouchableOpacity>
+
             </View>
           </View>
 
@@ -152,6 +165,28 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
+  restoreButton: {
+  backgroundColor: '#ffffff',
+  paddingVertical: 14,
+  paddingHorizontal: 24,
+  borderRadius: 30,
+  alignSelf: 'center',
+  marginTop: 10,
+  borderWidth: 2,
+  borderColor: '#007BFF',
+  shadowColor: '#4a3f35',
+  shadowOffset: { width: 0, height: 4 },
+  shadowOpacity: 0.15,
+  shadowRadius: 6,
+  elevation: 4,
+},
+restoreButtonText: {
+  fontFamily: 'Poppins-Bold',
+  fontSize: 20,
+  textAlign: 'center',
+  color: '#007BFF',
+},
+
   scrollContent: {
     alignItems: 'center',
     paddingBottom: 60,

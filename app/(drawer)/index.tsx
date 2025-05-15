@@ -66,23 +66,29 @@ export default function CreateScreen() {
   // Load "becomeHeroes" setting from local storage
 // Load "becomeHeroes" setting from local storage
 
-  useEffect(() => {
-    const requestTracking = async () => {
-      if (Platform.OS === 'ios') {
+useEffect(() => {
+  const initTrackingAndSettings = async () => {
+    if (Platform.OS === 'ios') {
+      try {
         const { status } = await getTrackingPermissionsAsync();
-        if (status === 'undetermined') {
-          await requestTrackingPermissionsAsync();
-        }
-      }
-    };
-  
-    AsyncStorage.getItem('becomeHeroes').then(value => {
-      setBecomeHeroes(value === 'true');
-    });
-  
-    requestTracking();
-  }, []);
+if (status === 'undetermined') {
 
+          const { status: newStatus } = await requestTrackingPermissionsAsync();
+          console.log('[ATT] User response:', newStatus);
+        } else {
+          console.log('[ATT] Already set:', status);
+        }
+      } catch (err) {
+        console.warn('[ATT] Error checking tracking permission:', err);
+      }
+    }
+
+    const val = await AsyncStorage.getItem('becomeHeroes');
+    setBecomeHeroes(val === 'true');
+  };
+
+  initTrackingAndSettings();
+}, []);
 
 
   // Reload user profile when the screen gains focus
@@ -209,38 +215,55 @@ export default function CreateScreen() {
 
   // --- Render ---
 
-  return (
-    <>
-      <Banner isSubscriber={isSubscriber} position="top" />
+return (
+  <>
+    {/* Banner en dehors du layout scrollable */}
+    <Banner isSubscriber={isSubscriber} position="top" />
 
+    <View style={{ flex: 1, position: 'relative' }}>
+      {/* Badge en position absolue */}
+      <PlumetteBadge
+        text={plumetteCount}
+        onPressAdd={async () => {
+          const rewarded = await openRewarded();
+          if (rewarded) {
+            handleReward();
+          }
+        }}
+      />
+
+      {/* Zone scrollable */}
       <View style={{ flex: 1, backgroundColor: '#a19cf4' }}>
-        <PlumetteBadge
-          text={plumetteCount}
-          onPressAdd={async () => {
-            const rewarded = await openRewarded();
-            if (rewarded) {
-              handleReward();
-            }
-          }}
-        />
-
         <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent}>
-          {isSubscriber && <View style={{ height: 0, backgroundColor: '#a19cf4' }} />}
-
-          <ImageBackground source={require('@/assets/backgrounds/dreamy-stars1.png')} style={styles.backgroundimage} resizeMode="cover">
-            <Interstitial visible={showInterstitial} onClose={() => { setShowInterstitial(false); triggerStoryGeneration(); }} />
-            <Rewarded
-              visible={showRewarded}
-              onClose={(rewarded) => {
-                setShowRewarded(false);
+          <ImageBackground
+            source={require('@/assets/backgrounds/dreamy-stars1.png')}
+            style={styles.backgroundimage}
+            resizeMode="cover"
+          >
+            <Interstitial
+              visible={showInterstitial}
+              onClose={() => {
+                setShowInterstitial(false);
+                triggerStoryGeneration();
               }}
             />
 
+            <Rewarded
+              visible={showRewarded}
+              onClose={() => setShowRewarded(false)}
+            />
 
+            {/* Nuages / mots */}
             <View style={styles.wordArea}>
               <View style={styles.cloudsContainer}>
                 {words.map((word, i) => (
-                  <View key={i} style={[styles.cloudWrapper, i % 2 === 1 ? styles.cloudRight : styles.cloudLeft]}>
+                  <View
+                    key={i}
+                    style={[
+                      styles.cloudWrapper,
+                      i % 2 === 1 ? styles.cloudRight : styles.cloudLeft,
+                    ]}
+                  >
                     <AnimatedWordBubble
                       value={word}
                       index={i}
@@ -272,94 +295,93 @@ export default function CreateScreen() {
               }}
             />
 
+            {(isSubscriber || isConnected) && (
+              <TouchableOpacity
+                onPress={() => {
+                  if (isSubscriber) {
+                    setShowSelectionModal(true);
+                  } else {
+                    Alert.alert('Abonnement requis', 'Cette fonctionnalité est réservée aux abonnés.', [
+                      { text: 'Annuler', style: 'cancel' },
+                      { text: 'Voir les offres', onPress: () => router.push('/offres') },
+                    ]);
+                  }
+                }}
+                style={styles.openModalButton}
+              >
+                <Text style={styles.ctaButtonText}>🎨 Personnaliser l’histoire</Text>
+              </TouchableOpacity>
+            )}
 
+            <TouchableOpacity
+              style={styles.generateButton}
+              onPress={() => {
+                if (!isLoggedIn) {
+                  router.push('/profile/login');
+                } else {
+                  handleGenerateStory();
+                }
+              }}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={styles.generateButtonText}>
+                    {!isLoggedIn ? "S'inscrire pour générer une histoire" : "Créer votre histoire"}
+                  </Text>
 
-{(isSubscriber || isConnected) && (
-  <TouchableOpacity
-    onPress={() => {
-      if (isSubscriber) {
-        setShowSelectionModal(true);
-      } else {
-        Alert.alert(
-          'Abonnement requis', 'Cette fonctionnalité est réservée aux abonnés.',
-          [
-            {
-              text: 'Annuler',
-              style: 'cancel',
-            },
-            {
-              text: 'Voir les offres',
-              onPress: () => router.push('/offres'),
-            },
-          ]
-        );
-      }
-    }}
-    style={styles.openModalButton}
-  >
-    <Text style={styles.ctaButtonText}>🎨 Personnaliser l’histoire</Text>
-  </TouchableOpacity>
-)}
+                  {!isSubscriber && isLoggedIn && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                      <Text style={styles.secondaryButtonText}>retire une plumette </Text>
+                      <Image
+                        source={require('@/assets/icons/plumette.png')}
+                        style={styles.icon}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  )}
 
-<TouchableOpacity
-  style={styles.generateButton}
-  onPress={() => {
-    if (!isLoggedIn) {
-      router.push('/profile/login');
-    } else {
-      handleGenerateStory();
-    }
-  }}
-  disabled={loading}
->
-  {loading ? (
-    <ActivityIndicator color="#fff" />
-  ) : (
-    <View style={{ alignItems: 'center' }}>
-      <Text style={styles.generateButtonText}>
-        {!isLoggedIn ? "S'inscrire pour générer une histoire" : "Créer votre histoire"}
-      </Text>
+                  {isSubscriber && (
+                    <Text style={styles.plumetteCounterText}>(illimitée)</Text>
+                  )}
+                </View>
+              )}
+            </TouchableOpacity>
 
-      {isLoggedIn && !isSubscriber && (
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
-          <Text style={styles.secondaryButtonText}>retire une plumette </Text>
-          <Image
-            source={require('@/assets/icons/plumette.png')}
-            style={styles.icon}
-            resizeMode="contain"
-          />
-        </View>
-      )}
-
-      {isSubscriber && (
-        <Text style={styles.plumetteCounterText}>(illimitée)</Text>
-      )}
-    </View>
-  )}
-</TouchableOpacity>
-
-            <TouchableOpacity style={styles.iconButton} onPress={() => {
-              setWords(['', '', '', '', '']);
-              setSelectedTags([]);
-              setSelectedTheme(null);
-              setSelectedStyle(null);
-            }}>
-
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                setWords(['', '', '', '', '']);
+                setSelectedTags([]);
+                setSelectedTheme(null);
+                setSelectedStyle(null);
+              }}
+            >
               <Text style={{ fontFamily: 'Quicksand-SemiBold', fontSize: 14, color: '#6b5b51' }}>
                 <Trash2 size={14} color="#333" /> Réinitialiser.
               </Text>
             </TouchableOpacity>
 
-
-            <WordSelector words={words} setWords={setWords} selectedTags={selectedTags} setSelectedTags={setSelectedTags} popularWords={popularWords} setPopularWords={setPopularWords} />
+            <WordSelector
+              words={words}
+              setWords={setWords}
+              selectedTags={selectedTags}
+              setSelectedTags={setSelectedTags}
+              popularWords={popularWords}
+              setPopularWords={setPopularWords}
+            />
           </ImageBackground>
 
           <View style={{ height: 60, backgroundColor: '#4a4381' }} />
           <Banner isSubscriber={isSubscriber} position="bottom" />
         </ScrollView>
       </View>
+
       <LoadingOverlay visible={loading} />
 
+      {/* Rewarded double vérif */}
       {showRewarded && (
         <Rewarded
           visible={showRewarded}
@@ -370,68 +392,59 @@ export default function CreateScreen() {
             setShowRewarded(false);
           }}
         />
-        
       )}
-<Modal visible={showSelectionModal} animationType="slide" transparent>
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalWrapper}>
-      <ScrollView
-        contentContainerStyle={styles.modalScroll}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Bloc Thème */}
-        <View style={styles.cardBlock}>
-          <Text style={styles.modalTitle}>🎭 Choisir un thème de l'histore</Text>
-          {Object.keys(moraleCategories).map((theme) => (
-            <TouchableOpacity key={theme} style={styles.checkboxRow} onPress={() => setSelectedTheme(theme)}>
-              <Text style={styles.checkboxIcon}>{selectedTheme === theme ? '☑' : '☐'}</Text>
-              <Text style={styles.checkboxLabel}>{theme}</Text>
-            </TouchableOpacity>
-          ))}
+
+      {/* Modal choix thème + style */}
+      <Modal visible={showSelectionModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalWrapper}>
+            <ScrollView contentContainerStyle={styles.modalScroll} showsVerticalScrollIndicator={false}>
+              <View style={styles.cardBlock}>
+                <Text style={styles.modalTitle}>🎭 Choisir un thème de l'histoire</Text>
+                {Object.keys(moraleCategories).map((theme) => (
+                  <TouchableOpacity key={theme} style={styles.checkboxRow} onPress={() => setSelectedTheme(theme)}>
+                    <Text style={styles.checkboxIcon}>{selectedTheme === theme ? '☑' : '☐'}</Text>
+                    <Text style={styles.checkboxLabel}>{theme}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.cardBlock}>
+                <Text style={styles.modalTitle}>🖌️ Choisir un style de dessin</Text>
+                {Object.keys(stylesEnfantsCategories).map((style) => (
+                  <TouchableOpacity key={style} style={styles.checkboxRow} onPress={() => setSelectedStyle(style)}>
+                    <Text style={styles.checkboxIcon}>{selectedStyle === style ? '☑' : '☐'}</Text>
+                    <Text style={styles.checkboxLabel}>{style}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => setShowSelectionModal(false)}>
+                <Text style={styles.cancelText}>Annuler</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.validateButton} onPress={() => setShowSelectionModal(false)}>
+                <Text style={styles.validateText}>Valider</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-
-        {/* Bloc Style */}
-        <View style={styles.cardBlock}>
-          <Text style={styles.modalTitle}>🖌️ Choisir un style de dessin</Text>
-          {Object.keys(stylesEnfantsCategories).map((style) => (
-            <TouchableOpacity key={style} style={styles.checkboxRow} onPress={() => setSelectedStyle(style)}>
-              <Text style={styles.checkboxIcon}>{selectedStyle === style ? '☑' : '☐'}</Text>
-              <Text style={styles.checkboxLabel}>{style}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </ScrollView>
-
-      {/* Boutons fixes en bas */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.cancelButton} onPress={() => setShowSelectionModal(false)}>
-          <Text style={styles.cancelText}>Annuler</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.validateButton} onPress={() => setShowSelectionModal(false)}>
-          <Text style={styles.validateText}>Valider</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  </View>
-</Modal>
-
-
-
-
+      </Modal>
 
       <WelcomeModal />
       <ConfirmModal
-  visible={confirmModalVisible}
-  onCancel={() => setConfirmModalVisible(false)}
-  onConfirm={handleAd}
-  plumetteLeft={profile?.plumette_left ?? 0}
-  lastPlumetteRecharge={profile?.last_plumette_recharge ?? null}
-  goToSubscribe={() => router.push('/offres')}
-/>
+        visible={confirmModalVisible}
+        onCancel={() => setConfirmModalVisible(false)}
+        onConfirm={handleAd}
+        plumetteLeft={profile?.plumette_left ?? 0}
+        lastPlumetteRecharge={profile?.last_plumette_recharge ?? null}
+        goToSubscribe={() => router.push('/offres')}
+      />
+    </View>
+  </>
+);
 
-
-    </>
-  );
 }
 
 const styles = StyleSheet.create({

@@ -138,7 +138,7 @@ export default function LoginScreen() {
   return (
     <ImageBackground source={require('@/assets/backgrounds/dreamy-stars1.png')} resizeMode="cover" style={styles.background}>
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        <TouchableOpacity style={styles.backButton} onPress={() => router.replace('/(drawer)' as const)}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.push('/(drawer)')}>
           <WrapText size={24} color="#6b5b51" />
         </TouchableOpacity>
 

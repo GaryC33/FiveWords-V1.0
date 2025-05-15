@@ -223,12 +223,13 @@ const [inputValue, setInputValue] = useState('');
           }}
         />
     
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.replace('/(drawer)' as const)}
-        >
-          <WrapText size={24} color="#6b5b51" />
-        </TouchableOpacity>
+<TouchableOpacity
+  style={styles.backButton}
+  onPress={() => router.push('/(drawer)')}
+>
+  <Text style={{ fontSize: 24, color: '#6b5b51' }}>←</Text>
+</TouchableOpacity>
+
     
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <ImageBackground
@@ -385,14 +386,7 @@ const [inputValue, setInputValue] = useState('');
                 Charger mon historique
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity
-  style={[styles.button, styles.editButton]}
-  onPress={restorePurchases}
->
-  <Text style={[styles.buttonText, styles.editButtonText]}>
-    Restaurer mes achats
-  </Text>
-</TouchableOpacity>
+
             {/* Boutons de fin */}
             <View style={styles.buttonContainer}>
               <TouchableOpacity

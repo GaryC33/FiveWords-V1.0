@@ -6,82 +6,114 @@ import {
   AdEventType,
 } from 'react-native-google-mobile-ads';
 
-// IDs
+// ─────────────────────────────────────────────────────────────
+// Ad Unit IDs
+// ─────────────────────────────────────────────────────────────
 const TEST_REWARDED_ID = 'ca-app-pub-3940256099942544/5224354917';
 const PROD_REWARDED_ID_ANDROID = 'ca-app-pub-9132892858077789/1596876441';
 const PROD_REWARDED_ID_IOS = 'ca-app-pub-9132892858077789/6163904898';
 
-const getRewardedAdUnitId = () => {
-  if (__DEV__) return TEST_REWARDED_ID;
-  return Platform.select({
-    android: PROD_REWARDED_ID_ANDROID,
-    ios: PROD_REWARDED_ID_IOS,
-  })!;
-};
+const getRewardedAdUnitId = () =>
+  __DEV__
+    ? TEST_REWARDED_ID
+    : Platform.select({
+        android: PROD_REWARDED_ID_ANDROID,
+        ios: PROD_REWARDED_ID_IOS,
+      })!;
 
+// ─────────────────────────────────────────────────────────────
+// Props
+// ─────────────────────────────────────────────────────────────
 type Props = {
   visible: boolean;
   onClose: (rewarded: boolean) => void;
 };
 
+// ─────────────────────────────────────────────────────────────
+// Rewarded Component
+// ─────────────────────────────────────────────────────────────
 export default function Rewarded({ visible, onClose }: Props) {
   const [adStarted, setAdStarted] = useState(false);
   const [ad, setAd] = useState<RewardedAd | null>(null);
   const [isAdLoaded, setIsAdLoaded] = useState(false);
   const rewarded = useRef(false);
 
+  // Charge une nouvelle pub à chaque affichage
   useEffect(() => {
     if (!visible) return;
 
     rewarded.current = false;
+    setIsAdLoaded(false);
+    setAdStarted(false);
+
     const newAd = RewardedAd.createForAdRequest(getRewardedAdUnitId(), {
       requestNonPersonalizedAdsOnly: true,
     });
 
     setAd(newAd);
-    setIsAdLoaded(false);
     newAd.load();
   }, [visible]);
 
+  // Gestion des events liés à la pub
   useEffect(() => {
     if (!ad) return;
 
-    let fallbackTimeout: NodeJS.Timeout;
+    let fallbackTimeout: NodeJS.Timeout | undefined;
 
-    const loadedListener = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+    const onLoaded = ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
       setIsAdLoaded(true);
-      if (adStarted) ad.show();
     });
 
-    const rewardListener = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+    const onReward = ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
       rewarded.current = true;
     });
 
-    const closeListener = ad.addAdEventListener(AdEventType.CLOSED, () => {
-      onClose(rewarded.current);
+    const onClose = ad.addAdEventListener(AdEventType.CLOSED, () => {
+      propsOnClose();
     });
 
-    const errorListener = ad.addAdEventListener(AdEventType.ERROR, () => {
+    const onError = ad.addAdEventListener(AdEventType.ERROR, () => {
       fallbackTimeout = setTimeout(() => {
-        onClose(false);
+        propsOnClose(false);
       }, 500);
     });
 
     return () => {
-      loadedListener();
-      rewardListener();
-      closeListener();
-      errorListener();
-      clearTimeout(fallbackTimeout);
+      onLoaded();
+      onReward();
+      onClose();
+      onError();
+      if (fallbackTimeout) clearTimeout(fallbackTimeout);
     };
-  }, [ad, adStarted]);
+  }, [ad]);
 
+  // Lancement de la pub (au clic utilisateur uniquement)
   const handleStartAd = () => {
     if (!ad) return;
     setAdStarted(true);
-    if (isAdLoaded) ad.show();
+
+    if (isAdLoaded) {
+      ad.show();
+    } else {
+      const checkInterval = setInterval(() => {
+        if (ad.loaded) {
+          clearInterval(checkInterval);
+          ad.show();
+        }
+      }, 400);
+    }
   };
 
+  const propsOnClose = (wasRewarded = rewarded.current) => {
+    setAd(null);
+    setIsAdLoaded(false);
+    setAdStarted(false);
+    onClose(wasRewarded);
+  };
+
+  // ─────────────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────────────
   return (
     <Modal visible={visible} transparent animationType="fade">
       <View style={styles.overlay}>
@@ -92,7 +124,7 @@ export default function Rewarded({ visible, onClose }: Props) {
           </Text>
           <View style={styles.buttons}>
             <Button title="Oui" onPress={handleStartAd} />
-            <Button title="Non" color="gray" onPress={() => onClose(false)} />
+            <Button title="Non" color="gray" onPress={() => propsOnClose(false)} />
           </View>
         </View>
       </View>
@@ -100,6 +132,9 @@ export default function Rewarded({ visible, onClose }: Props) {
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
