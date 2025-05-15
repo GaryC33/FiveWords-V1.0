@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
-import { Home, User, History, Star } from 'lucide-react-native';
+import { Chrome as Home, User, History, Star } from 'lucide-react-native';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
