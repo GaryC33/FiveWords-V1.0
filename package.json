@@ -9,7 +9,9 @@
     "dev:build:ios": "eas build --profile development --platform ios",
     "dev:build:android": "eas build --profile development --platform android",
     "android": "expo run:android",
-    "ios": "expo run:ios"
+    "ios": "expo run:ios",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo-google-fonts/nunito": "^0.2.3",
@@ -45,6 +47,7 @@
     "expo-status-bar": "~2.0.1",
     "expo-symbols": "^0.2.2",
     "expo-system-ui": "~4.0.9",
+    "expo-tracking-transparency": "~5.1.1",
     "google-ump-react-native": "^1.1.0",
     "jsonwebtoken": "^9.0.2",
     "jwt-decode": "^4.0.0",
@@ -65,31 +68,22 @@
     "react-native-screens": "~4.4.0",
     "react-native-svg": "15.8.0",
     "react-native-url-polyfill": "^2.0.0",
-    "expo-tracking-transparency": "~5.1.1"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@react-native-community/cli": "^18.0.0",
+    "@testing-library/react-native": "^12.4.3",
+    "@types/jest": "^29.5.12",
     "@types/jwt-decode": "^2.2.1",
     "@types/react": "~18.3.12",
+    "jest": "^29.7.0",
     "react-native-svg-transformer": "^1.5.0",
     "typescript": "^5.3.3",
     "unimported": "^1.31.0"
   },
-  "expo": {
-    "doctor": {
-      "reactNativeDirectoryCheck": {
-        "exclude": [
-          "react-native-crypto",
-          "@lucide/lab",
-          "mime",
-          "openai",
-          "lucide-react-native",
-          "jwt-decode",
-          "react-native-iap"
-        ],
-        "listUnknownPackages": false
-      }
-    }
+  "jest": {
+    "preset": "react-native",
+    "setupFiles": ["./jest.setup.js"]
   }
 }

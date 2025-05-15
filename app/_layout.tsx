@@ -1,17 +1,14 @@
-import React from 'react';
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useFrameworkReady } from '@/hooks/useFrameworkReady';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useFonts, Nunito_400Regular, Nunito_600SemiBold, Nunito_700Bold } from '@expo-google-fonts/nunito';
 import { useFonts as usePoppins, Poppins_400Regular, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import { useFonts as useQuicksand, Quicksand_400Regular } from '@expo-google-fonts/quicksand';
-import { SystemBars } from "react-native-edge-to-edge";
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { usePurchaseListener } from '@/services/iap'; // 👈 ajout
-import { supabase } from '@/services/supabase';
-import { useConsentManager } from '@/hooks/useConsentManager';
+
 export default function RootLayout() {
   useFrameworkReady();
-  usePurchaseListener(); // 👈 écouteur lancé une seule fois
-  useConsentManager();
 
   const [fontsLoaded, fontError] = useFonts({
     'Nunito-Regular': Nunito_400Regular,
@@ -22,26 +19,16 @@ export default function RootLayout() {
     'Quicksand-Regular': Quicksand_400Regular,
   });
 
-  React.useEffect(() => {
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('🌀 Auth state changed:', event);
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
   if (!fontsLoaded && !fontError) {
     return null;
   }
 
   return (
-    <>
+    <ErrorBoundary>
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(drawer)" />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
-      <SystemBars style="light" />
-    </>
+      <StatusBar style="auto" />
+    </ErrorBoundary>
   );
 }
